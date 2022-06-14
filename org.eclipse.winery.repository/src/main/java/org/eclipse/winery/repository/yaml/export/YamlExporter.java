@@ -94,7 +94,7 @@ public class YamlExporter extends CsarExporter {
         LOGGER.trace("Starting CSAR export with {}", entryId.toString());
 
         Map<CsarContentProperties, CsarEntry> refMap = new HashMap<>();
-        YamlToscaExportUtil exporter = new YamlToscaExportUtil();
+        YamlToscaExportUtil exporter = new YamlToscaExportUtil(Environments.getInstance().getRepositoryConfig().hasExportNormativeTypes());        
         ExportedState exportedState = new ExportedState();
         DefinitionsChildId currentId = entryId;
         Collection<DefinitionsChildId> referencedIds;

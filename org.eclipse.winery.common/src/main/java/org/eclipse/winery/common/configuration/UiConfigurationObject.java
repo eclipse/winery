@@ -40,6 +40,7 @@ public class UiConfigurationObject extends AbstractConfigurationObject {
     private static final String key = "ui";
     private static final String featurePrefix = key + ".features.";
     private static final String endpointPrefix = key + ".endpoints.";
+    private static final String repositoryPrefix = ".repository.";
 
     private Map<String, Boolean> features;
     private Map<String, String> endpoints;
@@ -76,8 +77,14 @@ public class UiConfigurationObject extends AbstractConfigurationObject {
     @Override
     void save() {
         this.features.keySet().stream()
-            .filter(p -> !YAML.toString().equals(p)
-            ).forEach(property -> configuration.setProperty(featurePrefix + property, this.features.get(property)));
+            .filter(p -> !YAML.toString().equals(p))
+            .forEach(property -> {
+                if ("exportNormativeTypes".equals(property)) {
+                    configuration.setProperty(repositoryPrefix + property, this.features.get(property));
+                } else {
+                    configuration.setProperty(featurePrefix + property, this.features.get(property));
+                }
+            });
         this.endpoints.keySet()
             .forEach(property -> configuration.setProperty(endpointPrefix + property, this.endpoints.get(property)));
         Environment.getInstance().save();
@@ -105,6 +112,7 @@ public class UiConfigurationObject extends AbstractConfigurationObject {
         } else {
             // closed-world assumption ... apparently.
             features.put(YAML.toString(), false);
+            features.put("exportNormativeTypes", false);            
         }
 
         this.features = features;

@@ -96,4 +96,5 @@ public class YamlSpecKeywords {
     public static final String VALID_TARGET_TYPES = "valid_target_types";
     public static final String VALUE = "value";
     public static final String VERSION = "version";
+    public static final String WORKFLOWS = "workflows";
 }

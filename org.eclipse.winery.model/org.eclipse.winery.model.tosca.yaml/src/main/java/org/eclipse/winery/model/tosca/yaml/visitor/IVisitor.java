@@ -55,6 +55,7 @@ import org.eclipse.winery.model.tosca.yaml.YTSubstitutionMappings;
 import org.eclipse.winery.model.tosca.yaml.YTTopologyTemplateDefinition;
 import org.eclipse.winery.model.tosca.yaml.YTTriggerDefinition;
 import org.eclipse.winery.model.tosca.yaml.YTVersion;
+import org.eclipse.winery.model.tosca.yaml.YTWorkflow;
 import org.eclipse.winery.model.tosca.yaml.support.Metadata;
 
 public interface IVisitor<R extends AbstractResult, P extends AbstractParameter> {
@@ -141,6 +142,8 @@ public interface IVisitor<R extends AbstractResult, P extends AbstractParameter>
     R visit(YTTopologyTemplateDefinition node, P parameter);
 
     R visit(YTVersion node, P parameter);
+
+    R visit(YTWorkflow node, P parameter);
 
     R visit(Metadata node, P parameter);
 }

@@ -13,18 +13,18 @@
  *******************************************************************************/
 package org.eclipse.winery.model.tosca.yaml;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Objects;
+import org.eclipse.jdt.annotation.NonNull;
+import org.eclipse.jdt.annotation.Nullable;
 
 import org.eclipse.winery.model.tosca.yaml.visitor.AbstractParameter;
 import org.eclipse.winery.model.tosca.yaml.visitor.AbstractResult;
 import org.eclipse.winery.model.tosca.yaml.visitor.IVisitor;
 import org.eclipse.winery.model.tosca.yaml.visitor.VisitorNode;
 
-import org.eclipse.jdt.annotation.NonNull;
-import org.eclipse.jdt.annotation.Nullable;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
 
 public class YTTopologyTemplateDefinition implements VisitorNode {
     private String description;
@@ -35,6 +35,7 @@ public class YTTopologyTemplateDefinition implements VisitorNode {
     private Map<String, YTPolicyDefinition> policies;
     private Map<String, YTParameterDefinition> outputs;
     private YTSubstitutionMappings substitutionMappings;
+    private Map<String, YTWorkflow> workflows;
 
     protected YTTopologyTemplateDefinition(Builder builder) {
         this.setDescription(builder.description);
@@ -45,6 +46,7 @@ public class YTTopologyTemplateDefinition implements VisitorNode {
         this.setPolicies(builder.policies);
         this.setOutputs(builder.outputs);
         this.setSubstitutionMappings(builder.substitutionMappings);
+        this.setWorkflows(builder.workflows);
     }
 
     @Override
@@ -53,32 +55,34 @@ public class YTTopologyTemplateDefinition implements VisitorNode {
         if (!(o instanceof YTTopologyTemplateDefinition)) return false;
         YTTopologyTemplateDefinition that = (YTTopologyTemplateDefinition) o;
         return Objects.equals(getDescription(), that.getDescription()) &&
-            Objects.equals(getInputs(), that.getInputs()) &&
-            Objects.equals(getNodeTemplates(), that.getNodeTemplates()) &&
-            Objects.equals(getRelationshipTemplates(), that.getRelationshipTemplates()) &&
-            Objects.equals(getGroups(), that.getGroups()) &&
-            Objects.equals(getPolicies(), that.getPolicies()) &&
-            Objects.equals(getOutputs(), that.getOutputs()) &&
-            Objects.equals(getSubstitutionMappings(), that.getSubstitutionMappings());
+                Objects.equals(getInputs(), that.getInputs()) &&
+                Objects.equals(getNodeTemplates(), that.getNodeTemplates()) &&
+                Objects.equals(getRelationshipTemplates(), that.getRelationshipTemplates()) &&
+                Objects.equals(getGroups(), that.getGroups()) &&
+                Objects.equals(getPolicies(), that.getPolicies()) &&
+                Objects.equals(getOutputs(), that.getOutputs()) &&
+                Objects.equals(getSubstitutionMappings(), that.getSubstitutionMappings()) &&
+                Objects.equals(getWorkflows(), that.getWorkflows());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getDescription(), getInputs(), getNodeTemplates(), getRelationshipTemplates(), getGroups(), getPolicies(), getOutputs(), getSubstitutionMappings());
+        return Objects.hash(getDescription(), getInputs(), getNodeTemplates(), getRelationshipTemplates(), getGroups(), getPolicies(), getOutputs(), getSubstitutionMappings(), getWorkflows());
     }
 
     @Override
     public String toString() {
         return "TTopologyTemplateDefinition{" +
-            "description='" + getDescription() + '\'' +
-            ", inputs=" + getInputs() +
-            ", nodeTemplates=" + getNodeTemplates() +
-            ", relationshipTemplates=" + getRelationshipTemplates() +
-            ", groups=" + getGroups() +
-            ", policies=" + getPolicies() +
-            ", outputs=" + getOutputs() +
-            ", substitutionMappings=" + getSubstitutionMappings() +
-            '}';
+                "description='" + getDescription() + '\'' +
+                ", inputs=" + getInputs() +
+                ", nodeTemplates=" + getNodeTemplates() +
+                ", relationshipTemplates=" + getRelationshipTemplates() +
+                ", groups=" + getGroups() +
+                ", policies=" + getPolicies() +
+                ", outputs=" + getOutputs() +
+                ", substitutionMappings=" + getSubstitutionMappings() +
+                ", workflows=" + getWorkflows() +
+                '}';
     }
 
     @Nullable
@@ -169,6 +173,15 @@ public class YTTopologyTemplateDefinition implements VisitorNode {
         this.substitutionMappings = substitutionMappings;
     }
 
+    @Nullable
+    public Map<String, YTWorkflow> getWorkflows() {
+        return workflows;
+    }
+
+    public void setWorkflows(Map<String, YTWorkflow> workflows) {
+        this.workflows = workflows;
+    }
+
     public <R extends AbstractResult<R>, P extends AbstractParameter<P>> R accept(IVisitor<R, P> visitor, P parameter) {
         return visitor.visit(this, parameter);
     }
@@ -182,6 +195,7 @@ public class YTTopologyTemplateDefinition implements VisitorNode {
         private Map<String, YTPolicyDefinition> policies;
         private Map<String, YTParameterDefinition> outputs;
         private YTSubstitutionMappings substitutionMappings;
+        private Map<String, YTWorkflow> workflows;
 
         public Builder setDescription(String description) {
             this.description = description;
@@ -220,6 +234,11 @@ public class YTTopologyTemplateDefinition implements VisitorNode {
 
         public Builder setSubstitutionMappings(YTSubstitutionMappings substitutionMappings) {
             this.substitutionMappings = substitutionMappings;
+            return this;
+        }
+
+        public Builder setWorkflows(Map<String, YTWorkflow> workflows) {
+            this.workflows = workflows;
             return this;
         }
 

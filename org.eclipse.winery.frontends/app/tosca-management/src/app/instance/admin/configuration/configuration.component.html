@@ -111,6 +111,11 @@
            name="patternDetection"
            [checked]="config.features.patternDetection">
     <label for="patternDetection">Pattern Detection</label>
+    <br>
+    <input type="checkbox" [(ngModel)]="config.features.exportNormativeTypes" id="exportNormativeTypes"
+           name="exportNormativeTypes"
+           [checked]="config.features.exportNormativeTypes">
+    <label for="exportNormativeTypes">Export YAML Normative Types</label>
 </div>
 <div>
     <button class="btn btn-primary" (click)="saveChanges()">Save Changes</button>
