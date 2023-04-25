@@ -28,7 +28,7 @@
         <winery.upload.url>IA_ARTIFACT_TEMPLATE_UPLOAD_URL</winery.upload.url>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <winery.version>3.0.0-SNAPSHOT</winery.version>
-        <spring.version>3.0.7.RELEASE</spring.version>
+        <spring.version>6.0.0</spring.version>
         <cxf.version>2.7.6</cxf.version>
     </properties>
 
