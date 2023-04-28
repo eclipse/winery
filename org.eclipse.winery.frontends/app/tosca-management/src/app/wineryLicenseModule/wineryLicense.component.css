@@ -76,3 +76,19 @@ input {
     font: normal 12px/100% Verdana, Tahoma, sans-serif;
     width: 100%;
 }
+
+#s1 {
+    height: 40px;
+    width: 600px;
+    overflow-x: scroll;/* Remove this if you want the user to resize the textarea */
+}
+
+#s2 {
+    height: 40px;
+    width: 600px;
+    overflow-x: scroll;/* Remove this if you want the user to resize the textarea */
+}
+
+.emphasized {
+    font-size: small;
+}

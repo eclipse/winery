@@ -13,6 +13,7 @@
  *******************************************************************************/
 import { ViewChild, Component, OnInit, TemplateRef } from '@angular/core';
 import { WineryLicenseService } from './wineryLicense.service';
+import { ChecklistDatabase } from './wineryLicenseTree.service';
 import { WineryNotificationService } from '../wineryNotificationModule/wineryNotification.service';
 import { InstanceService } from '../instance/instance.service';
 import { ToscaTypes } from '../model/enums';
@@ -28,24 +29,33 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatStepper } from '@angular/material/stepper';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap';
 import { LicenseEngineService } from './licenseEngine.service';
-import { License } from './LicenseEngineApiData';
+import { License, LicenseTree, LicenseTreeFlatNode } from './LicenseEngineApiData';
+import { MatTreeFlattener } from '@angular/material';
+import { FlatTreeControl } from '@angular/cdk/tree';
+import { MatTreeFlatDataSource } from '@angular/material/tree';
+import { SelectionModel } from '@angular/cdk/collections';
+
 
 @Component({
     templateUrl: 'wineryLicense.component.html',
     styleUrls: ['wineryLicense.component.css'],
-    providers: [WineryLicenseService, LicenseEngineService]
+    providers: [WineryLicenseService, LicenseEngineService, ChecklistDatabase]
 })
+
 
 export class WineryLicenseComponent implements OnInit {
 
+    licenseID: String;
     loading = true;
     loadingLicense = false;
     isEditable = false;
     licenseAvailable = true;
     showForm = false;
     loadingbar = false;
-
     foundLicenses = '';
+    foundLicenseswithFiles = new Map<string, Array<string>>();
+    treeData = {};
+    treeParentData = {};
     currentLicenseText = '';
     initialLicenseText = '';
     selectedLicenseText = '';
@@ -53,14 +63,40 @@ export class WineryLicenseComponent implements OnInit {
     options: string[] = [];
     selectedOptions: string[] = [];
     compatibleLicenses: License[] = [];
-
+    unknowLicense = [];
+    nullLicense = [];
     toscaType: ToscaTypes;
     licenseEngine: boolean;
     firstFormGroup: FormGroup;
     secondFormGroup: FormGroup;
     confirmSaveModalRef: BsModalRef;
     confirmDownloadModalRef: BsModalRef;
+    treeControl = new FlatTreeControl<LicenseTreeFlatNode>(
+        (node) => node.level,
+        (node) => node.expandable,
+    );
 
+    treeFlattener = new MatTreeFlattener(
+        (node: LicenseTree, level_: number) => {
+            return {
+                expandable: !!node.files && node.files.length > 0,
+                name: node.name,
+                level: level_,
+            };
+        },
+        (node) => node.level,
+        (node) => node.expandable,
+        (node) => node.files,
+    );
+    dataSource = new MatTreeFlatDataSource(this.treeControl, this.treeFlattener);
+    flatNodeMap = new Map<LicenseTreeFlatNode, LicenseTree>();
+    nestedNodeMap = new Map<LicenseTree, LicenseTreeFlatNode>();
+    /** A selected parent node to be inserted */
+    selectedParent: LicenseTreeFlatNode | null = null;
+    /** The new item's name */
+    newItemName = '';
+    /** The selection for checklist */
+    checklistSelection = new SelectionModel<LicenseTreeFlatNode>(true /* multiple */);
     @ViewChild('stepper') stepper: MatStepper;
     @ViewChild('confirmSaveModal') confirmSaveModal: TemplateRef<any>;
     @ViewChild('confirmDownloadModal') confirmDownloadModal: TemplateRef<any>;
@@ -69,9 +105,199 @@ export class WineryLicenseComponent implements OnInit {
                 private configurationService: WineryRepositoryConfigurationService,
                 private wlService: WineryLicenseService, private leService: LicenseEngineService,
                 public sharedData: InstanceService, private formBuilder: FormBuilder,
-                private modalService: BsModalService) {
+                private modalService: BsModalService,
+                private _database: ChecklistDatabase) {
         this.licenseEngine = configurationService.configuration.features.licenseEngine;
         this.toscaType = this.sharedData.toscaComponent.toscaType;
+
+        this.treeFlattener = new MatTreeFlattener(this.transformer, this.getLevel,
+            this.isExpandable, this.getChildren);
+        this.treeControl = new FlatTreeControl<LicenseTreeFlatNode>(this.getLevel, this.isExpandable);
+        this.dataSource = new MatTreeFlatDataSource(this.treeControl, this.treeFlattener);
+
+        _database.dataChange.subscribe((data) => {
+            this.dataSource.data = data;
+        });
+
+    }
+
+
+
+
+    getLevel = (node: LicenseTreeFlatNode) => node.level;
+    isExpandable = (node: LicenseTreeFlatNode) => node.expandable;
+    getChildren = (node: LicenseTree): LicenseTree[] => node.files;
+    hasChild = (_: number, _nodeData: LicenseTreeFlatNode) => _nodeData.expandable;
+    hasNoContent = (_: number, _nodeData: LicenseTreeFlatNode) => _nodeData.name === '';
+
+    /**
+     * Transformer to convert nested node to flat node. Record the nodes in maps for later use.
+     */
+    transformer = (node: LicenseTree, level: number) => {
+        const existingNode = this.nestedNodeMap.get(node);
+        // @ts-ignore
+        // @ts-ignore
+        const flatNode = existingNode && existingNode.item === node.item
+            ? existingNode
+            : new LicenseTreeFlatNode();
+        flatNode.name = node.name;
+        flatNode.level = level;
+        flatNode.expandable = true;                   // edit this to true to make it always expandable
+        this.flatNodeMap.set(flatNode, node);
+        this.nestedNodeMap.set(node, flatNode);
+        return flatNode;
+    }
+
+    /** Whether all the descendants of the node are selected. */
+    descendantsAllSelected(node: LicenseTreeFlatNode): boolean {
+        const descendants = this.treeControl.getDescendants(node);
+        const descAllSelected = descendants.length > 0 && descendants.every((child) => {
+            return this.checklistSelection.isSelected(child);
+        });
+        return descAllSelected;
+    }
+
+    /** Whether part of the descendants are selected */
+    descendantsPartiallySelected(node: LicenseTreeFlatNode): boolean {
+        const descendants = this.treeControl.getDescendants(node);
+        const result = descendants.some((child) => this.checklistSelection.isSelected(child));
+        return result && !this.descendantsAllSelected(node);
+    }
+
+    /** Toggle the to-do item selection. Select/deselect all the descendants node */
+    todoItemSelectionToggle(node: LicenseTreeFlatNode): void {
+        this.checklistSelection.toggle(node);
+        const descendants = this.treeControl.getDescendants(node);
+        this.checklistSelection.isSelected(node)
+            ? this.checklistSelection.select(...descendants)
+            : this.checklistSelection.deselect(...descendants);
+
+        // Force update for the parent
+        descendants.forEach((child) => this.checklistSelection.isSelected(child));
+        this.checkAllParentsSelection(node);
+    }
+    /* Checks all the parents when a leaf node is selected/unselected */
+    checkAllParentsSelection(node: LicenseTreeFlatNode): void {
+        let parent: LicenseTreeFlatNode | null = this.getParentNode(node);
+        while (parent) {
+            this.checkRootNodeSelection(parent);
+            parent = this.getParentNode(parent);
+        }
+    }
+
+    /** Check root node checked state and change it accordingly */
+    checkRootNodeSelection(node: LicenseTreeFlatNode): void {
+        const nodeSelected = this.checklistSelection.isSelected(node);
+        const descendants = this.treeControl.getDescendants(node);
+        const descAllSelected = descendants.length > 0 && descendants.every((child) => {
+            return this.checklistSelection.isSelected(child);
+        });
+        if (nodeSelected && !descAllSelected) {
+            this.checklistSelection.deselect(node);
+        } else if (!nodeSelected && descAllSelected) {
+            this.checklistSelection.select(node);
+        }
+    }
+
+    /* Get the parent node of a node */
+    getParentNode(node: LicenseTreeFlatNode): LicenseTreeFlatNode | null {
+        const currentLevel = this.getLevel(node);
+
+        if (currentLevel < 1) {
+            return null;
+        }
+
+        const startIndex = this.treeControl.dataNodes.indexOf(node) - 1;
+
+        for (let i = startIndex; i >= 0; i--) {
+            const currentNode = this.treeControl.dataNodes[i];
+
+            if (this.getLevel(currentNode) < currentLevel) {
+                return currentNode;
+            }
+        }
+        return null;
+    }
+
+    /** Select the category so we can insert the new item. */
+    addNewItem(node: LicenseTreeFlatNode) {
+        const parentNode = this.flatNodeMap.get(node);
+        this._database.insertItem(parentNode!, '');
+        this.treeControl.expand(node);
+    }
+
+    /** Save the node to database */
+    saveNode(node: LicenseTreeFlatNode, itemValue: string) {
+        const nestedNode = this.flatNodeMap.get(node);
+        this._database.updateItem(nestedNode!, itemValue);
+    }
+
+    public deleteItem(node: LicenseTreeFlatNode): void {
+
+        // Get the parent node of the selected child node
+        if (this.treeParentData.hasOwnProperty(node.name)) {
+            this.treeParentData[node.name] = true;
+
+            // It mean user selected parent node so we need to select all the childred node
+            for (const child in this.treeData[node.name]) {
+                if (this.treeData[node.name].hasOwnProperty(child)) {
+                    this.treeData[node.name][child] = true;
+                } }
+
+            this.treeControl.expand(node);
+            return;
+        }
+        const parentNode = this.getParentNode(node);
+        // Map from flat node to nested node.
+        this.treeData[parentNode.name][node.name] = true;
+        this.treeControl.expand(node);
+
+    }
+
+    undoDelteItemd(node: LicenseTreeFlatNode): void {
+
+        // Get the parent node of the selected child node
+        if (this.treeParentData.hasOwnProperty(node.name)) {
+            this.treeParentData[node.name] = false;
+
+            // undo parent children selection
+            for (const child in this.treeData[node.name]) {
+                if (this.treeData[node.name].hasOwnProperty(child)) {
+                this.treeData[node.name][child] = false;
+                }
+            }
+            this.treeControl.expand(node);
+            return;
+        }
+        const parentNode = this.getParentNode(node);
+        // Map from flat node to nested node.
+        this.treeData[parentNode.name][node.name] = false;
+        this.treeControl.expand(node);
+
+    }
+
+    public isObjectEmpty(obj) {
+        for (const prop in obj) {
+            if (obj.hasOwnProperty(prop)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public checkNode(node: LicenseTreeFlatNode) {
+
+        // check if dictionary is empty or not
+        if (this.isObjectEmpty(this.treeData)) {
+            return false;
+        }
+        // check is parent not child
+        if (this.treeParentData.hasOwnProperty(node.name)) {
+            return this.treeParentData[node.name];
+        }
+
+        const parentNode = this.getParentNode(node);
+        return this.treeData[parentNode.name][node.name];
     }
 
     ngOnInit() {
@@ -164,7 +390,45 @@ export class WineryLicenseComponent implements OnInit {
 
     checkLicenseData() {
         if (this.leService.isFinished()) {
-            this.foundLicenses = 'Extracted Licenses From Source Code: ' + this.leService.getFoundLicenses();
+            const toscaElements = this.sharedData.path.split('/');
+            const toscaElementID = toscaElements[toscaElements.length - 1];
+            this.licenseID = toscaElementID;
+            let tempDict = {};
+            this.leService.getLicensewithFiles(toscaElementID).subscribe((data) => {
+                // separating other license
+                if (data.hasOwnProperty('UNKNOWN LICENSE')) {
+                    this.unknowLicense = data['UNKNOWN LICENSE'];
+                    delete data['UNKNOWN LICENSE'];
+                } else { this.unknowLicense = []; }
+                if (data.hasOwnProperty('NULL LICENSE')) {
+
+                    this.nullLicense = data['NULL LICENSE'];
+                    delete data['NULL LICENSE'];
+                } else {
+                    this.nullLicense = [];
+                }
+                for (const entry in data) {
+                    if (data.hasOwnProperty(entry)) {
+                    const tempList = [];
+                    for (const index in data[entry]) {
+
+                        if (data[entry].hasOwnProperty(index)) {
+                        tempDict[data[entry][index]] = false;
+                        tempList.push(data[entry][index]);
+                    } }
+                    this.treeData[entry] = tempDict;
+                    this.treeParentData[entry] = false;
+                    tempDict = {};
+                    this._database.TREE_DATA[entry] = tempList;
+                    const mapKey = entry;
+                    const mapValue = data[entry];
+                    this.foundLicenseswithFiles.set(mapKey, mapValue);
+                }}
+
+                this._database.initialize();
+
+                this.foundLicenses = data;
+            });
             this.loadingbar = false;
             this.firstFormGroup.enable();
             this.stepper.selected.completed = true;
@@ -172,6 +436,23 @@ export class WineryLicenseComponent implements OnInit {
         } else {
             this.failed();
         }
+    }
+
+    deleteFromBackend() {
+        const filenames = [];
+        for (const key in this.treeData) {
+            if (this.treeData.hasOwnProperty(key)) {
+            for (const val in this.treeData[key]) {
+                if (this.treeData[key][val]) {
+
+                    filenames.push((val));
+                }
+            }
+        } }
+        if (filenames.length === 0) {
+            return;
+        }
+        this.leService.excludeFile(filenames).subscribe();
     }
 
     onSubmitCheckCompatibility() {
@@ -335,3 +616,4 @@ export class WineryLicenseComponent implements OnInit {
         this.notify.success('Successfully saved LICENSE');
     }
 }
+

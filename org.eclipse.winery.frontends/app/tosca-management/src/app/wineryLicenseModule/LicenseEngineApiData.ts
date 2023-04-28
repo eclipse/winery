@@ -1,3 +1,5 @@
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+
 /*******************************************************************************
  * Copyright (c) 2022 Contributors to the Eclipse Foundation
  *
@@ -21,6 +23,18 @@ export interface Software {
     licensesEffective: Array<string>;
     filesExcluded: number;
     licensesAll: Array<string>;
+}
+
+export class LicenseTree {
+    name: string;
+    files?: LicenseTree[];
+    ismarktodelte: boolean;
+}
+
+export class LicenseTreeFlatNode {
+    expandable: boolean;
+    name: string;
+    level: number;
 }
 
 export enum Status {

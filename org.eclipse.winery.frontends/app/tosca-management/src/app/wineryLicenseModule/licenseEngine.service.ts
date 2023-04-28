@@ -98,7 +98,7 @@ export class LicenseEngineService {
 
     getCompatibleLicenses(): Observable<string[]> {
         const headers = new HttpHeaders({ 'content-type': 'application/json', 'Accept': 'application/json' });
-        return this.http.get(this.licenseEngineUrl + '/software/' + this.software.id + '/recommended-licenses', {
+        return this.http.get(this.licenseEngineUrl + '/software/' + this.software.id + '/compatible-licenses', {
             headers: headers
         }).map(
             (data) => {
@@ -169,4 +169,35 @@ export class LicenseEngineService {
         return this.software.licensesEffective;
     }
 
+    getLicensewithFiles(id: String): any {
+        const headers = new HttpHeaders({ 'Accept': 'application/json' });
+        return this.http.get(this.licenseEngineUrl + '/software/' + id + '/licenses?effective=false', {
+            headers: headers
+        });
+    }
+
+    excludeFile(filename: String[]) {
+
+        const headers = new HttpHeaders({ 'content-type': 'application/json' });
+        headers.append('Access-Control-Request-Method', 'DELETE');
+        return this.http.put(this.licenseEngineUrl + '/software/' + this.software.id + '/files-excluded', filename, {
+            headers: headers, observe: 'response'
+        }).map((response) => {
+            return response.status === 200;
+        });
+    }
+
+    deleteExcludedFile() {
+        const headers = new HttpHeaders({ 'content-type': 'application/json' });
+        headers.append('Access-Control-Request-Method', 'DELETE');
+        return this.http.delete(this.licenseEngineUrl + '/software/' + this.software.id + '/files-excluded', {
+            headers: headers, observe: 'response'
+        }).map((response) => {
+            return response.status === 204;
+        });
+
+
+
+
+    }
 }

@@ -78,7 +78,7 @@
 
         <textarea [(ngModel)]="currentLicenseText" *ngIf="!showForm"></textarea>
 
-        <div *ngIf="showForm" style="clear: both">
+        <div class="emphasized" *ngIf="showForm" style="clear: both">
             <mat-horizontal-stepper [linear]="true" #stepper>
                 <mat-step completed="false">
                     <form [formGroup]="firstFormGroup">
@@ -117,7 +117,93 @@
                     <form [formGroup]="secondFormGroup">
                         <ng-template matStepLabel>Check Compatibility</ng-template>
                         <br>
-                        <mat-label style="font-size: 15px">{{foundLicenses}}</mat-label>
+                        <mat-accordion>
+                            <mat-expansion-panel>
+                                <mat-expansion-panel-header>
+                                    <mat-panel-title>
+
+                                        <h5><u>Files with found licenses</u></h5>
+                                    </mat-panel-title>
+                                </mat-expansion-panel-header>
+
+                                <mat-tree [dataSource]="dataSource" [treeControl]="treeControl">
+                                    <!-- This is the tree node template for leaf nodes -->
+                                    <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding>
+                                        <!-- use a disabled button to provide padding for tree leaf -->
+                                        <button mat-icon-button disabled></button>
+                                        {{node.name}}
+                                    </mat-tree-node>
+                                    <!-- This is the tree node template for expandable nodes -->
+                                    <mat-tree-node *matTreeNodeDef="let node;when: hasChild" matTreeNodePadding>
+                                        <button mat-icon-button matTreeNodeToggle
+                                                [attr.aria-label]="'toggle ' + node.name">
+                                            <mat-icon class="mat-icon-rtl-mirror">
+                                                {{treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
+                                            </mat-icon>
+                                        </button>
+
+                                        <p id="s1" *ngIf="!checkNode(node)"><b>{{node.name}}</b>
+                                        </p>
+
+                                        <p id="s2" *ngIf="checkNode(node)">
+                                            <del>
+                                                <b> {{node.name}} </b>
+                                            </del>
+                                        </p>
+
+                                        <button mat-icon-button (click)="deleteItem(node)">
+                                            <mat-icon>block</mat-icon>
+                                        </button>
+
+                                        <button mat-icon-button (click)="undoDelteItemd(node)">
+                                            <mat-icon>undo</mat-icon>
+                                        </button>
+                                    </mat-tree-node>
+
+                                </mat-tree>
+                            </mat-expansion-panel>
+                            <div *ngIf="unknowLicense.length!=0">
+                                <mat-expansion-panel>
+
+                                    <mat-expansion-panel-header>
+                                        <mat-panel-title>
+                                            <h5><u>Files which may contain possible licences</u></h5>
+
+                                        </mat-panel-title>
+
+                                    </mat-expansion-panel-header>
+                                    <mat-list>
+                                        <mat-list-item class="emphasized" *ngFor="let file of unknowLicense">
+                                            <b>{{file}}</b>
+                                        </mat-list-item>
+
+
+                                    </mat-list>
+                                </mat-expansion-panel>
+
+                            </div>
+
+                            <div *ngIf="nullLicense.length!=0">
+                                <mat-expansion-panel>
+
+                                    <mat-expansion-panel-header>
+                                        <mat-panel-title>
+                                            <h5><u>Files which do not contain any licences</u></h5>
+
+                                        </mat-panel-title>
+
+                                    </mat-expansion-panel-header>
+                                    <mat-list>
+                                        <mat-list-item class="emphasized" *ngFor="let file of nullLicense">
+                                            <b>{{file}}</b>
+                                        </mat-list-item>
+
+
+                                    </mat-list>
+                                </mat-expansion-panel>
+
+                            </div>
+                        </mat-accordion>
                         <br><br>
                         <div *ngIf="loadingbar">
                             <mat-progress-bar mode="indeterminate"
@@ -131,10 +217,12 @@
                         <div>
                             <button class="btn btn-primary" matStepperPrevious (click)="back()">Back</button>
                             <button style="margin-left: 12px" class="btn btn-primary"
-                                    (click)="onSubmitCheckCompatibility()" [disabled]="loadingbar">Next
+                                    (click)="deleteFromBackend();onSubmitCheckCompatibility()" [disabled]="loadingbar">
+                                Next
                             </button>
                         </div>
                     </form>
+
                 </mat-step>
                 <mat-step>
                     <ng-template matStepLabel>Select License</ng-template>
