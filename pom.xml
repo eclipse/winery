@@ -73,7 +73,7 @@
         <com.fasterxml.jackson>2.13.2</com.fasterxml.jackson>
         <de.danielbechler.java-object-diff>0.95</de.danielbechler.java-object-diff>
         <io.github.adr.e-adr.version>1.0.0</io.github.adr.e-adr.version>
-        <org.apache.commons.configuration>2.3</org.apache.commons.configuration>
+        <org.apache.commons.configuration>2.8.0</org.apache.commons.configuration>
         <org.eclipse.jdt.annotation>2.1.0</org.eclipse.jdt.annotation>
         <org.eclipse.jgit.version>5.7.0.202003110725-r</org.eclipse.jgit.version>
         <org.mockito.moickito-core.version>2.19.0</org.mockito.moickito-core.version>
