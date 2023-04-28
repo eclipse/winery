@@ -15,9 +15,10 @@
 package org.eclipse.winery.model.adaptation.substitution.refinement.topologyrefinement;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -273,16 +274,21 @@ public class TopologyFragmentRefinement extends AbstractRefinement {
                 LOGGER.info("Using service '{}' to translate artifact '{}'", serviceEntry.getKey(), artifact);
                 DARefinementConfigurationObject.DARefinementService service = serviceEntry.getValue();
 
-                try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-                    MultipartEntityBuilder multipartBuilder = MultipartEntityBuilder.create();
+                try (final CloseableHttpClient httpClient = HttpClients.createDefault();
+                     final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
 
                     ArtifactTemplateId artifactTemplateId = new ArtifactTemplateId(artifact);
                     ArtifactTemplateFilesDirectoryId filesDirectoryId = new ArtifactTemplateFilesDirectoryId(artifactTemplateId);
-                    try (PipedInputStream inputStream = new PipedInputStream(); PipedOutputStream output = new PipedOutputStream(inputStream);) {
-                        this.repository.getZippedContents(filesDirectoryId, output);
-                        // https://stackoverflow.com/questions/5778658/how-to-convert-outputstream-to-inputstream
-                        multipartBuilder.addBinaryBody("file", inputStream,
-                            ContentType.APPLICATION_OCTET_STREAM, "files.zip");
+                    this.repository.getZippedContents(filesDirectoryId, byteArrayOutputStream);
+
+                    try (final InputStream inputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray())) {
+                        MultipartEntityBuilder multipartBuilder = MultipartEntityBuilder.create();
+                        multipartBuilder.addBinaryBody(
+                            "file",
+                            inputStream,
+                            ContentType.APPLICATION_OCTET_STREAM,
+                            "files.zip"
+                        );
 
                         multipartBuilder.addTextBody("inputFormat", mapping.getArtifactType().getLocalPart());
                         multipartBuilder.addTextBody("outputFormat", mapping.getTargetArtifactType().getLocalPart());
