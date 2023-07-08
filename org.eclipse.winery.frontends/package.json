@@ -72,13 +72,13 @@
         "zone.js": "0.8.26"
     },
     "devDependencies": {
-        "@angular-devkit/build-angular": "0.13.10",
+        "@angular-devkit/build-angular": "16.1.4",
         "@angular/cli": "7.3.3",
         "@angular/compiler-cli": "7.2.7",
         "@angular/language-service": "7.2.7",
         "@types/node": "10.9.4",
         "codelyzer": "4.4.4",
-        "node-sass": "4.14.1",
+        "node-sass": "9.0.0",
         "ts-node": "5.0.1",
         "tslint": "5.11.0",
         "typedoc": "0.12.0",
