@@ -43,6 +43,9 @@ public class ZipUtility {
             ZipEntry zipEntry = zipInputStream.getNextEntry();
             while (zipEntry != null) {
                 Path newFile = destDirPath.resolve(zipEntry.getName());
+                if (!newFile.normalize().startsWith(destDirPath.normalize())) {
+                    throw new IOException("Bad zip entry");
+                }
                 Files.createDirectories(newFile.getParent());
                 Files.copy(zipInputStream, newFile);
                 zipEntry = zipInputStream.getNextEntry();

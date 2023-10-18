@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import javax.xml.XMLConstants;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -46,6 +47,9 @@ public class DocumentBasedCsarEntry implements CsarEntry {
         if (transformer == null) {
             // used for generated XSD schemas
             TransformerFactory tFactory = TransformerFactory.newInstance();
+            tFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            tFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+            tFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
             try {
                 transformer = tFactory.newTransformer();
             } catch (TransformerConfigurationException e1) {

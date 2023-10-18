@@ -18,6 +18,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 
 import org.eclipse.winery.crawler.chefcookbooks.chefcookbook.ChefCookbookConfiguration;
@@ -165,7 +166,7 @@ public class ChefDslHelper {
 
             ChefDSLParser chefDSLParser = null;
             try {
-                File file = File.createTempFile("tempcodeinstringfile", ".tmp");
+                File file = Files.createTempFile("tempcodeinstringfile", ".tmp").toFile();
                 BufferedWriter bw = new BufferedWriter(new FileWriter(file));
                 bw.write(rubyCode + "\n");
                 bw.close();

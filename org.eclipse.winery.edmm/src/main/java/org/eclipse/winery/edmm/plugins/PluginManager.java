@@ -19,8 +19,10 @@ import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import io.github.edmm.core.plugin.PluginService;
 import io.github.edmm.core.plugin.TransformationPlugin;
@@ -88,6 +90,26 @@ public class PluginManager {
                 .getResourceAsStream("pluginContext.xml");
 
             DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+            String FEATURE = null;
+            try {
+                FEATURE = "http://xml.org/sax/features/external-parameter-entities";
+                documentBuilderFactory.setFeature(FEATURE, false);
+
+                FEATURE = "http://apache.org/xml/features/nonvalidating/load-external-dtd";
+                documentBuilderFactory.setFeature(FEATURE, false);
+
+                FEATURE = "http://xml.org/sax/features/external-general-entities";
+                documentBuilderFactory.setFeature(FEATURE, false);
+
+                documentBuilderFactory.setXIncludeAware(false);
+                documentBuilderFactory.setExpandEntityReferences(false);
+
+                documentBuilderFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+
+            } catch (ParserConfigurationException e) {
+                throw new IllegalStateException("The feature '"
+                    + FEATURE + "' is not supported by your XML processor.", e);
+            }
             DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
             xmlPluginConfigDocument = documentBuilder.parse(pluginsInputStream);
         } catch (Exception e) {

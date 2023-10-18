@@ -26,7 +26,7 @@ import java.util.Map;
 import org.eclipse.winery.crawler.chefcookbooks.chefcookbook.CookbookParseResult;
 
 import org.yaml.snakeyaml.Yaml;
-
+import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.representer.Representer;
 
 public class ChefKitchenYmlParser {
@@ -47,7 +47,7 @@ public class ChefKitchenYmlParser {
         Representer representer = new Representer();
         representer.getPropertyUtils().setSkipMissingProperties(true);
 
-        Yaml yaml = new Yaml();
+        Yaml yaml = new Yaml(new SafeConstructor());
         InputStream inputStream = null;
         try {
             inputStream = new FileInputStream(this.cookbookPath + "/kitchen.yml");

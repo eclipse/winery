@@ -17,6 +17,7 @@ package org.eclipse.winery.model.adaptation.instance;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -164,7 +165,7 @@ public abstract class InstanceModelUtils {
         File key = null;
         try {
             JSch jsch = new JSch();
-            key = File.createTempFile("key", "tmp", FileUtils.getTempDirectory());
+            key = Files.createTempFile(FileUtils.getTempDirectory().toPath(), "key", "tmp").toFile();
             FileUtils.write(key, sshCredentials.get(vmPrivateKey), "UTF-8");
             logger.info("tmp key file created: {}", key.exists());
 

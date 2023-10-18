@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.Files;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -299,7 +300,7 @@ public class MainResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response importDefinitions(InputStream is) throws IOException {
         File toscaFile;
-        toscaFile = File.createTempFile("TOSCA", ".tosca");
+        toscaFile = Files.createTempFile("TOSCA", ".tosca").toFile();
         FileUtils.copyInputStreamToFile(is, toscaFile);
         CsarImporter importer = new CsarImporter(RepositoryFactory.getRepository());
         List<String> errors = new ArrayList<>();

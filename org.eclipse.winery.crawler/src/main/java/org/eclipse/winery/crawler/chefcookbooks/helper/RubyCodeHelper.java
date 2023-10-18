@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.HashSet;
 
@@ -103,7 +104,7 @@ public class RubyCodeHelper {
      * @return Returns a temporary file where prepared Ruby code is stored
      */
     public static File prepareCodeFromFile(String rubyFilePath) throws IOException {
-        File temp = File.createTempFile("temprubyfile", ".rb");
+        File temp = Files.createTempFile("temprubyfile", ".rb").toFile();
         temp.deleteOnExit();
         try (InputStream is = new FileInputStream(rubyFilePath)) {
             try (BufferedReader buf = new BufferedReader(new InputStreamReader(is))) {
