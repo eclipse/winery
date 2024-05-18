@@ -241,7 +241,7 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-            <version>4.5.2</version>
+            <version>4.5.13</version>
             <exclusions>
                 <!-- provided by jcl-over-slf4j to enable logging via logback -->
                 <exclusion>

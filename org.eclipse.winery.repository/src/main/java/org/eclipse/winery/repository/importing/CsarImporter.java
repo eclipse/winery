@@ -288,6 +288,9 @@ public class CsarImporter {
             while ((entry = zis.getNextEntry()) != null) {
                 if (!entry.isDirectory()) {
                     Path targetPath = csarDir.resolve(entry.getName());
+                    if (!targetPath.normalize().startsWith(csarDir.normalize())) {
+                        throw new IOException("Bad zip entry");
+                    }
                     Files.createDirectories(targetPath.getParent());
                     Files.copy(zis, targetPath);
                     if (options.isValidate()) {

@@ -14,6 +14,7 @@
 
 package org.eclipse.winery.repository.targetallocation.criteria.minexternalconnections;
 
+import java.security.SecureRandom;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Random;
@@ -35,7 +36,7 @@ public class KargerMinCutVariation {
     private ConnectsToGraph current;
 
     private int repetitions;
-    private Random random = new Random();
+    private Random random = new SecureRandom();
 
     public KargerMinCutVariation(ConnectsToGraph graph) {
         original = graph;

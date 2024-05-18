@@ -277,6 +277,9 @@ public abstract class AbstractFileBasedRepository implements IRepository {
             while ((entry = zis.getNextEntry()) != null) {
                 if (!entry.isDirectory()) {
                     Path path = this.getRepositoryRoot().resolve(entry.getName());
+                    if (!path.normalize().startsWith(this.getRepositoryRoot().normalize())) {
+                        throw new IOException("Bad zip entry");
+                    }
                     try {
                         FileUtils.createDirectory(path.getParent());
                         try {

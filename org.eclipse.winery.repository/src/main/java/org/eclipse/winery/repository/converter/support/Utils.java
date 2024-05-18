@@ -69,6 +69,9 @@ public class Utils {
             while (Objects.nonNull(entry = inputStream.getNextEntry())) {
                 if (!entry.isDirectory()) {
                     Path targetPath = dir.resolve(entry.getName());
+                    if (!targetPath.normalize().startsWith(dir.normalize())) {
+                        throw new IOException("Bad zip entry");
+                    }
                     Files.createDirectories(targetPath.getParent());
                     Files.copy(inputStream, targetPath);
                     logger.debug("Write tmp file: {}", targetPath.toString());
@@ -95,7 +98,10 @@ public class Utils {
 
             while (entry != null) {
                 final String fileName = entry.getName();
-                final File newFile = new File(outputFolder + File.separator + fileName);
+                final File newFile = new File(outputFolder, fileName);
+                if (!newFile.toPath().normalize().startsWith(outputFolder)) {
+                    throw new IOException("Bad zip entry");
+                }
                 if (!entry.isDirectory()) {
                     unpackedFileList.add(entry.getName());
                     // create all non exists folders
