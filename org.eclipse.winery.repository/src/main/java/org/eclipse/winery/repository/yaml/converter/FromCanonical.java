@@ -13,18 +13,9 @@
  *******************************************************************************/
 package org.eclipse.winery.repository.yaml.converter;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.xml.namespace.QName;
+import org.eclipse.collections.impl.bimap.mutable.HashBiMap;
+import org.eclipse.jdt.annotation.NonNull;
+import org.eclipse.jdt.annotation.Nullable;
 
 import org.eclipse.winery.common.Constants;
 import org.eclipse.winery.model.converter.support.Namespaces;
@@ -82,6 +73,7 @@ import org.eclipse.winery.model.tosca.TServiceTemplate;
 import org.eclipse.winery.model.tosca.TTag;
 import org.eclipse.winery.model.tosca.TTopologyTemplate;
 import org.eclipse.winery.model.tosca.TTriggerDefinition;
+import org.eclipse.winery.model.tosca.TWorkflow;
 import org.eclipse.winery.model.tosca.extensions.kvproperties.AttributeDefinition;
 import org.eclipse.winery.model.tosca.extensions.kvproperties.ConstraintClauseKV;
 import org.eclipse.winery.model.tosca.extensions.kvproperties.ParameterDefinition;
@@ -124,6 +116,7 @@ import org.eclipse.winery.model.tosca.yaml.YTServiceTemplate;
 import org.eclipse.winery.model.tosca.yaml.YTSubstitutionMappings;
 import org.eclipse.winery.model.tosca.yaml.YTTopologyTemplateDefinition;
 import org.eclipse.winery.model.tosca.yaml.YTTriggerDefinition;
+import org.eclipse.winery.model.tosca.yaml.YTWorkflow;
 import org.eclipse.winery.model.tosca.yaml.support.Defaults;
 import org.eclipse.winery.model.tosca.yaml.support.Metadata;
 import org.eclipse.winery.model.tosca.yaml.support.YTMapActivityDefinition;
@@ -134,11 +127,21 @@ import org.eclipse.winery.model.tosca.yaml.support.YamlSpecKeywords;
 import org.eclipse.winery.repository.yaml.YamlRepository;
 import org.eclipse.winery.repository.yaml.export.YamlExporter;
 
-import org.eclipse.collections.impl.bimap.mutable.HashBiMap;
-import org.eclipse.jdt.annotation.NonNull;
-import org.eclipse.jdt.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.xml.namespace.QName;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class FromCanonical {
     public final static Logger LOGGER = LoggerFactory.getLogger(FromCanonical.class);
@@ -167,15 +170,15 @@ public class FromCanonical {
         LOGGER.debug("Convert TServiceTemplate: {}", node.getIdFromIdOrNameField());
 
         YTServiceTemplate.Builder builder = new YTServiceTemplate.Builder(Defaults.TOSCA_DEFINITIONS_VERSION)
-            .setDescription(convertDocumentation(node.getElement().getDocumentation()))
-            .setArtifactTypes(convert(node.getArtifactTypes()))
-            .setCapabilityTypes(convert(node.getCapabilityTypes()))
-            .setRelationshipTypes(convert(node.getRelationshipTypes()))
-            .setNodeTypes(convert(node.getNodeTypes()))
-            .setPolicyTypes(convert(node.getPolicyTypes()))
-            .setInterfaceTypes(convert(node.getInterfaceTypes()))
-            .setDataTypes(convert(node.getDataTypes()))
-            .setGroupTypes(convert(node.getGroupTypes()));
+                .setDescription(convertDocumentation(node.getElement().getDocumentation()))
+                .setArtifactTypes(convert(node.getArtifactTypes()))
+                .setCapabilityTypes(convert(node.getCapabilityTypes()))
+                .setRelationshipTypes(convert(node.getRelationshipTypes()))
+                .setNodeTypes(convert(node.getNodeTypes()))
+                .setPolicyTypes(convert(node.getPolicyTypes()))
+                .setInterfaceTypes(convert(node.getInterfaceTypes()))
+                .setDataTypes(convert(node.getDataTypes()))
+                .setGroupTypes(convert(node.getGroupTypes()));
 
         if (node.getServiceTemplates().size() == 1) {
             builder.setTopologyTemplate(convert(node.getServiceTemplates().get(0)));
@@ -201,10 +204,10 @@ public class FromCanonical {
         YTMapImportDefinition tMapImportDefinition = new YTMapImportDefinition();
         importDefinitions.forEach((key, value) -> {
             YTImportDefinition tImportDefinition =
-                new YTImportDefinition.Builder(key)
-                    .setNamespacePrefix(getNamespacePrefix(value.getNamespaceURI()))
-                    .setNamespaceUri(value.getNamespaceURI())
-                    .build();
+                    new YTImportDefinition.Builder(key)
+                            .setNamespacePrefix(getNamespacePrefix(value.getNamespaceURI()))
+                            .setNamespaceUri(value.getNamespaceURI())
+                            .build();
             tMapImportDefinition.put(value.getLocalPart(), tImportDefinition);
         });
 
@@ -216,11 +219,11 @@ public class FromCanonical {
         YTMapImportDefinition tMapImportDefinition = new YTMapImportDefinition();
         for (Map.Entry<DefinitionsChildId, TDefinitions> importDefinition : importDefinitions.entrySet()) {
             YTImportDefinition tImportDefinition =
-                new YTImportDefinition.Builder(YamlExporter.getDefinitionsName(repository, importDefinition.getKey())
-                    .concat(Constants.SUFFIX_TOSCA_DEFINITIONS))
-                    .setNamespacePrefix(getNamespacePrefix(importDefinition.getKey().getQName().getNamespaceURI()))
-                    .setNamespaceUri(importDefinition.getKey().getQName().getNamespaceURI())
-                    .build();
+                    new YTImportDefinition.Builder(YamlExporter.getDefinitionsName(repository, importDefinition.getKey())
+                            .concat(Constants.SUFFIX_TOSCA_DEFINITIONS))
+                            .setNamespacePrefix(getNamespacePrefix(importDefinition.getKey().getQName().getNamespaceURI()))
+                            .setNamespaceUri(importDefinition.getKey().getQName().getNamespaceURI())
+                            .build();
             tMapImportDefinition.put(importDefinition.getKey().getQName().getLocalPart(), tImportDefinition);
         }
         if (!tMapImportDefinition.isEmpty()) {
@@ -238,16 +241,16 @@ public class FromCanonical {
         if (node instanceof TEntityTemplate.YamlProperties) {
             Map<String, Object> propertiesKV = ((TEntityTemplate.YamlProperties) node).getProperties();
             return propertiesKV.entrySet().stream()
-                .map(entry ->
-                    new LinkedHashMap.SimpleEntry<>(
-                        String.valueOf(entry.getKey()),
-                        PropertyConverter.convert(entry.getValue())
+                    .map(entry ->
+                            new LinkedHashMap.SimpleEntry<>(
+                                    String.valueOf(entry.getKey()),
+                                    PropertyConverter.convert(entry.getValue())
+                            )
                     )
-                )
-                .collect(Collectors.toMap(
-                    Map.Entry::getKey,
-                    Map.Entry::getValue
-                ));
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            Map.Entry::getValue
+                    ));
         }
         // FIXME deal with converting WineryKVProperties and XmlProperties
         return null;
@@ -263,17 +266,21 @@ public class FromCanonical {
             return null;
         }
         YTTopologyTemplateDefinition.Builder builder = new YTTopologyTemplateDefinition.Builder()
-            .setDescription(convertDocumentation(topologyTemplate.getDocumentation()))
-            .setNodeTemplates(convert(topologyTemplate.getNodeTemplates(), topologyTemplate.getRelationshipTemplates()))
-            .setRelationshipTemplates(convert(topologyTemplate.getRelationshipTemplates()))
-            .setPolicies(convert(topologyTemplate.getPolicies()))
-            .setGroups(convert(topologyTemplate.getGroups()));
+                .setDescription(convertDocumentation(topologyTemplate.getDocumentation()))
+                .setNodeTemplates(convert(topologyTemplate.getNodeTemplates(), topologyTemplate.getRelationshipTemplates()))
+                .setRelationshipTemplates(convert(topologyTemplate.getRelationshipTemplates()))
+                .setPolicies(convert(topologyTemplate.getPolicies()))
+                .setGroups(convert(topologyTemplate.getGroups()));
         if (topologyTemplate.getInputs() != null) {
             builder.setInputs(convert(topologyTemplate.getInputs()));
         }
         if (topologyTemplate.getOutputs() != null) {
             builder.setOutputs(convert(topologyTemplate.getOutputs()));
         }
+        if (!topologyTemplate.getWorkflows().isEmpty()) {
+            builder.setWorkflows(convert(topologyTemplate.getWorkflows()));
+        }
+
         return builder.build();
     }
 
@@ -282,9 +289,9 @@ public class FromCanonical {
             return null;
         }
         return nodes.stream()
-            .filter(Objects::nonNull)
-            .flatMap(entry -> convert(entry, Optional.ofNullable(rTs).orElse(new ArrayList<>())).entrySet().stream())
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                .filter(Objects::nonNull)
+                .flatMap(entry -> convert(entry, Optional.ofNullable(rTs).orElse(new ArrayList<>())).entrySet().stream())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     @NonNull
@@ -303,18 +310,18 @@ public class FromCanonical {
         }
 
         return Collections.singletonMap(
-            node.getIdFromIdOrNameField(),
-            new YTNodeTemplate.Builder(
-                convert(
-                    node.getType(),
-                    new NodeTypeId(node.getType())
-                ))
-                .setProperties(convert(node.getProperties()))
-                .setMetadata(meta)
-                .setRequirements(convertRequirements(node.getRequirements()))
-                .setCapabilities(convert(node.getCapabilities()))
-                .setArtifacts(convert(node.getArtifacts()))
-                .build()
+                node.getIdFromIdOrNameField(),
+                new YTNodeTemplate.Builder(
+                        convert(
+                                node.getType(),
+                                new NodeTypeId(node.getType())
+                        ))
+                        .setProperties(convert(node.getProperties()))
+                        .setMetadata(meta)
+                        .setRequirements(convertRequirements(node.getRequirements()))
+                        .setCapabilities(convert(node.getCapabilities()))
+                        .setArtifacts(convert(node.getArtifacts()))
+                        .build()
         );
     }
 
@@ -324,10 +331,10 @@ public class FromCanonical {
             return new LinkedHashMap<>();
         }
         return Collections.singletonMap(
-            node.getIdFromIdOrNameField(),
-            new YTRelationshipTemplate.Builder(convert(node.getType(), new RelationshipTypeId(node.getType())))
-                .setProperties(convert(node.getProperties()))
-                .build()
+                node.getIdFromIdOrNameField(),
+                new YTRelationshipTemplate.Builder(convert(node.getType(), new RelationshipTypeId(node.getType())))
+                        .setProperties(convert(node.getProperties()))
+                        .build()
         );
     }
 
@@ -339,13 +346,13 @@ public class FromCanonical {
         }
 
         builder
-            .setDerivedFrom(convert(node.getDerivedFrom(), clazz))
-            .setMetadata(convertTags(node.getTags()))
-            .addMetadata("targetNamespace", node.getTargetNamespace())
-            .addMetadata("abstract", node.getAbstract() ? "true" : "false")
-            .addMetadata("final", node.getFinal() ? "true" : "false")
-            .setAttributes(convertAttributes(node, node.getAttributeDefinitions()))
-            .setDescription(convertDocumentation(node.getDocumentation()));
+                .setDerivedFrom(convert(node.getDerivedFrom(), clazz))
+                .setMetadata(convertTags(node.getTags()))
+                .addMetadata("targetNamespace", node.getTargetNamespace())
+                .addMetadata("abstract", node.getAbstract() ? "true" : "false")
+                .addMetadata("final", node.getFinal() ? "true" : "false")
+                .setAttributes(convertAttributes(node, node.getAttributeDefinitions()))
+                .setDescription(convertDocumentation(node.getDocumentation()));
 
         if (node.getProperties() != null) {
             if (node.getProperties() instanceof TEntityType.YamlPropertiesDefinition) {
@@ -362,23 +369,23 @@ public class FromCanonical {
 
     private Map<String, YTPropertyDefinition> convertWinerysProperties(WinerysPropertiesDefinition properties) {
         return properties.getPropertyDefinitions().stream()
-            .collect(Collectors.toMap(
-                PropertyDefinitionKV::getKey,
-                entry -> new YTPropertyDefinition.Builder(convertType(entry.getType()))
-                    .setRequired(entry.isRequired())
-                    .setDefault(entry.getDefaultValue())
-                    .setDescription(entry.getDescription())
-                    .addConstraints(convertConstraints(entry.getConstraints()))
-                    .build()
-            ));
+                .collect(Collectors.toMap(
+                        PropertyDefinitionKV::getKey,
+                        entry -> new YTPropertyDefinition.Builder(convertType(entry.getType()))
+                                .setRequired(entry.isRequired())
+                                .setDefault(entry.getDefaultValue())
+                                .setDescription(entry.getDescription())
+                                .addConstraints(convertConstraints(entry.getConstraints()))
+                                .build()
+                ));
     }
 
     private Map<String, YTPropertyDefinition> convertYamlProperties(TEntityType.YamlPropertiesDefinition properties) {
         return properties.getProperties().stream()
-            .collect(Collectors.toMap(
-                TEntityType.YamlPropertyDefinition::getName,
-                this::convert
-            ));
+                .collect(Collectors.toMap(
+                        TEntityType.YamlPropertyDefinition::getName,
+                        this::convert
+                ));
     }
 
     private YTPropertyDefinition convert(TEntityType.YamlPropertyDefinition canonical) {
@@ -415,11 +422,11 @@ public class FromCanonical {
             return new HashMap<>();
         }
         return attributes.stream().collect(Collectors.toMap(
-            AttributeDefinition::getKey,
-            entry -> new YTAttributeDefinition.Builder(entry.getType())
-                .setDescription(entry.getDescription())
-                .setDefault(entry.getDefaultValue())
-                .build()
+                AttributeDefinition::getKey,
+                entry -> new YTAttributeDefinition.Builder(entry.getType())
+                        .setDescription(entry.getDescription())
+                        .setDefault(entry.getDefaultValue())
+                        .build()
         ));
     }
 
@@ -441,12 +448,12 @@ public class FromCanonical {
 
     public Map<String, YTArtifactType> convert(TArtifactType node) {
         YTArtifactType.Builder builder = new YTArtifactType.Builder()
-            .setMimeType(node.getMimeType())
-            .setFileExt(node.getFileExtensions());
+                .setMimeType(node.getMimeType())
+                .setFileExt(node.getFileExtensions());
         String nodeFullName = this.getFullName(node);
         return Collections.singletonMap(
-            nodeFullName,
-            convert(node, builder, TArtifactType.class).build()
+                nodeFullName,
+                convert(node, builder, TArtifactType.class).build()
         );
     }
 
@@ -458,13 +465,13 @@ public class FromCanonical {
         String nodeFullName = this.getFullName(node);
 
         return Collections.singletonMap(
-            nodeFullName,
-            convert(node, new YTNodeType.Builder(), TNodeType.class)
-                .setRequirements(convertRequirementsDefinition(node.getRequirementDefinitions()))
-                .setCapabilities(convertCapabilitiesDefinition(node.getCapabilityDefinitions()))
-                .setInterfaces(convert(node.getInterfaceDefinitions()))
-                .setArtifacts(convert(node.getArtifacts()))
-                .build()
+                nodeFullName,
+                convert(node, new YTNodeType.Builder(), TNodeType.class)
+                        .setRequirements(convertRequirementsDefinition(node.getRequirementDefinitions()))
+                        .setCapabilities(convertCapabilitiesDefinition(node.getCapabilityDefinitions()))
+                        .setInterfaces(convert(node.getInterfaceDefinitions()))
+                        .setArtifacts(convert(node.getArtifacts()))
+                        .build()
         );
     }
 
@@ -473,10 +480,10 @@ public class FromCanonical {
             return null;
         }
         return Stream.of(convert(node.getDeploymentArtifacts(), artifacts), convert(node.getImplementationArtifacts(), artifacts))
-            .filter(Objects::nonNull)
-            .flatMap(entry -> entry.entrySet().stream())
-            .filter(Objects::nonNull)
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                .filter(Objects::nonNull)
+                .flatMap(entry -> entry.entrySet().stream())
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     public Map<String, YTRelationshipType> convert(TRelationshipType node) {
@@ -485,11 +492,11 @@ public class FromCanonical {
         }
         String nodeFullName = this.getFullName(node);
         return Collections.singletonMap(
-            nodeFullName,
-            convert(node, new YTRelationshipType.Builder(), TRelationshipType.class)
-                .addInterfaces(convert(node.getInterfaceDefinitions()))
-                .setValidTargetTypes(node.getValidTargetList())
-                .build()
+                nodeFullName,
+                convert(node, new YTRelationshipType.Builder(), TRelationshipType.class)
+                        .addInterfaces(convert(node.getInterfaceDefinitions()))
+                        .setValidTargetTypes(node.getValidTargetList())
+                        .build()
         );
     }
 
@@ -498,18 +505,18 @@ public class FromCanonical {
             return null;
         }
         return node.stream()
-            .filter(Objects::nonNull)
-            .map(entry -> convert(
-                    entry,
-                    Optional.ofNullable(implementation.getImplementationArtifacts())
-                        .orElse(new ArrayList<>())
-                        .stream()
-                        .filter(impl -> Objects.nonNull(impl) && impl.getInterfaceName().equals(entry.getName()))
-                        .collect(Collectors.toList())
+                .filter(Objects::nonNull)
+                .map(entry -> convert(
+                                entry,
+                                Optional.ofNullable(implementation.getImplementationArtifacts())
+                                        .orElse(new ArrayList<>())
+                                        .stream()
+                                        .filter(impl -> Objects.nonNull(impl) && impl.getInterfaceName().equals(entry.getName()))
+                                        .collect(Collectors.toList())
+                        )
                 )
-            )
-            .flatMap(entry -> entry.entrySet().stream())
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                .flatMap(entry -> entry.entrySet().stream())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     @NonNull
@@ -517,10 +524,10 @@ public class FromCanonical {
         if (Objects.isNull(node)) return new LinkedHashMap<>();
         String nodeFullName = this.getFullName(node);
         return Collections.singletonMap(
-            nodeFullName,
-            convert(node, new YTCapabilityType.Builder(), TCapabilityType.class)
-                .addValidSourceTypes(node.getValidNodeTypes())
-                .build()
+                nodeFullName,
+                convert(node, new YTCapabilityType.Builder(), TCapabilityType.class)
+                        .addValidSourceTypes(node.getValidNodeTypes())
+                        .build()
         );
     }
 
@@ -532,23 +539,23 @@ public class FromCanonical {
 
         YTPolicyType.Builder builder = new YTPolicyType.Builder();
         builder = builder.setTargets(
-            node.getAppliesTo()
-                .stream()
-                .map(TPolicyType.NodeTypeReference::getTypeRef)
-                .collect(Collectors.toList())
+                node.getAppliesTo()
+                        .stream()
+                        .map(TPolicyType.NodeTypeReference::getTypeRef)
+                        .collect(Collectors.toList())
         );
 
         builder.setTriggers(
-            node.getTriggers()
-                .stream()
-                .collect(Collectors.toMap(TTriggerDefinition::getName, this::convert))
+                node.getTriggers()
+                        .stream()
+                        .collect(Collectors.toMap(TTriggerDefinition::getName, this::convert))
         );
 
         String nodeFullName = this.getFullName(node);
         return Collections.singletonMap(
-            nodeFullName,
-            convert(node, builder, TPolicyType.class)
-                .build()
+                nodeFullName,
+                convert(node, builder, TPolicyType.class)
+                        .build()
         );
     }
 
@@ -570,10 +577,10 @@ public class FromCanonical {
             defBuilder.setTargetFilter(filterBuilder.build());
         }
         defBuilder.setAction(
-            tTriggerDefinition.getAction()
-                .stream()
-                .map(this::convert)
-                .collect(Collectors.toList())
+                tTriggerDefinition.getAction()
+                        .stream()
+                        .map(this::convert)
+                        .collect(Collectors.toList())
         );
 
         return defBuilder.build();
@@ -588,9 +595,9 @@ public class FromCanonical {
             TCallOperationActivityDefinition canonicalDef = (TCallOperationActivityDefinition) node;
             YTCallOperationActivityDefinition yamlDef = new YTCallOperationActivityDefinition(canonicalDef.getOperation());
             Map<String, YTParameterDefinition> inputs = canonicalDef.getInputs().stream()
-                .map(this::convert)
-                .flatMap(m -> m.entrySet().stream())
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                    .map(this::convert)
+                    .flatMap(m -> m.entrySet().stream())
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
             yamlDef.setInputs(inputs);
 
             return new YTMapActivityDefinition().setMap(Collections.singletonMap(YamlSpecKeywords.CALL_OPERATION, yamlDef));
@@ -604,11 +611,11 @@ public class FromCanonical {
             return new LinkedHashMap<>();
         }
         YTGroupType.Builder builder = new YTGroupType.Builder()
-            .setMembers(node.getMembers());
+                .setMembers(node.getMembers());
         String nodeFullName = getFullName(node);
         return Collections.singletonMap(
-            nodeFullName,
-            convert(node, builder, TGroupType.class).build()
+                nodeFullName,
+                convert(node, builder, TGroupType.class).build()
         );
     }
 
@@ -617,8 +624,8 @@ public class FromCanonical {
             return null;
         }
         return new YTSubstitutionMappings.Builder()
-            // TODO Convert Boundary definitions
-            .build();
+                // TODO Convert Boundary definitions
+                .build();
     }
 
     @NonNull
@@ -627,11 +634,11 @@ public class FromCanonical {
             return new LinkedHashMap<>();
         }
         return Collections.singletonMap(
-            node.getName(),
-            new YTPolicyDefinition.Builder(convert(node.getPolicyType(), new PolicyTypeId(node.getPolicyType())))
-                .setProperties(convert(node.getProperties()))
-                .setTargets(node.getTargets())
-                .build()
+                node.getName(),
+                new YTPolicyDefinition.Builder(convert(node.getPolicyType(), new PolicyTypeId(node.getPolicyType())))
+                        .setProperties(convert(node.getProperties()))
+                        .setTargets(node.getTargets())
+                        .build()
         );
     }
 
@@ -640,10 +647,10 @@ public class FromCanonical {
      */
     public String convertDocumentation(@NonNull List<TDocumentation> doc) {
         return doc.stream()
-            .map(TDocumentation::getContent)
-            .flatMap(List::stream)
-            .map(Object::toString)
-            .collect(Collectors.joining("\n"));
+                .map(TDocumentation::getContent)
+                .flatMap(List::stream)
+                .map(Object::toString)
+                .collect(Collectors.joining("\n"));
     }
 
     public QName convert(TEntityType.DerivedFrom node, Class<? extends TEntityType> clazz) {
@@ -667,9 +674,9 @@ public class FromCanonical {
             id = new PolicyTypeId(node.getTypeRef());
         }
         return getQName(
-            id,
-            node.getTypeRef().getNamespaceURI(),
-            node.getTypeRef().getLocalPart());
+                id,
+                node.getTypeRef().getNamespaceURI(),
+                node.getTypeRef().getLocalPart());
     }
 
     public Metadata convertTags(List<TTag> tags) {
@@ -677,12 +684,12 @@ public class FromCanonical {
             return null;
         }
         return tags.stream()
-            .filter(Objects::nonNull)
-            .collect(Collectors.toMap(
-                TTag::getName,
-                TTag::getValue,
-                (a, b) -> a + "|" + b,
-                Metadata::new));
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(
+                        TTag::getName,
+                        TTag::getValue,
+                        (a, b) -> a + "|" + b,
+                        Metadata::new));
     }
 
     @Deprecated
@@ -691,10 +698,10 @@ public class FromCanonical {
             return new LinkedHashMap<>();
         }
         return Collections.singletonMap(
-            node.getName(),
-            new YTInterfaceDefinition.Builder<>()
-                .setOperations(convertOperations(node.getOperations()))
-                .build()
+                node.getName(),
+                new YTInterfaceDefinition.Builder<>()
+                        .setOperations(convertOperations(node.getOperations()))
+                        .build()
         );
     }
 
@@ -704,11 +711,11 @@ public class FromCanonical {
             return null;
         }
         return nodes.stream()
-            .filter(Objects::nonNull)
-            .flatMap(node -> convert(node)
-                .entrySet().stream())
-            .filter(Objects::nonNull)
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                .filter(Objects::nonNull)
+                .flatMap(node -> convert(node)
+                        .entrySet().stream())
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     @NonNull
@@ -718,8 +725,8 @@ public class FromCanonical {
             return new LinkedHashMap<>();
         }
         return Collections.singletonMap(
-            node.getName(),
-            new YTOperationDefinition.Builder().build()
+                node.getName(),
+                new YTOperationDefinition.Builder().build()
         );
     }
 
@@ -737,17 +744,17 @@ public class FromCanonical {
             return null;
         }
         return nodes.stream()
-            .filter(Objects::nonNull)
-            .flatMap(node -> convert(
-                node,
-                impl.stream()
-                    .filter(entry -> Objects.nonNull(entry)
-                        && Objects.nonNull(entry.getOperationName())
-                        && entry.getOperationName().equals(node.getName()))
-                    .collect(Collectors.toList())
-            ).entrySet().stream())
-            .filter(Objects::nonNull)
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                .filter(Objects::nonNull)
+                .flatMap(node -> convert(
+                        node,
+                        impl.stream()
+                                .filter(entry -> Objects.nonNull(entry)
+                                        && Objects.nonNull(entry.getOperationName())
+                                        && entry.getOperationName().equals(node.getName()))
+                                .collect(Collectors.toList())
+                ).entrySet().stream())
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     @NonNull
@@ -757,8 +764,8 @@ public class FromCanonical {
             return new LinkedHashMap<>();
         }
         return Collections.singletonMap(
-            node.getName(),
-            new YTOperationDefinition.Builder().build()
+                node.getName(),
+                new YTOperationDefinition.Builder().build()
         );
     }
 
@@ -833,10 +840,10 @@ public class FromCanonical {
             return null;
         }
         return node.stream()
-            .filter(Objects::nonNull)
-            .map(this::convert)
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
+                .filter(Objects::nonNull)
+                .map(this::convert)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
     public List<YTMapRequirementAssignment> convertRequirements(List<TRequirement> node) {
@@ -844,10 +851,10 @@ public class FromCanonical {
             return null;
         }
         return node.stream()
-            .filter(Objects::nonNull)
-            .map(this::convert)
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
+                .filter(Objects::nonNull)
+                .map(this::convert)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
     public Map<String, YTArtifactDefinition> convert(TDeploymentArtifact artifact) {
@@ -856,8 +863,8 @@ public class FromCanonical {
         }
 
         return Collections.singletonMap(
-            artifact.getArtifactRef() != null ? artifact.getArtifactRef().getLocalPart() : artifact.getName(),
-            convertArtifactReference(artifact.getArtifactRef())
+                artifact.getArtifactRef() != null ? artifact.getArtifactRef().getLocalPart() : artifact.getName(),
+                convertArtifactReference(artifact.getArtifactRef())
         );
     }
 
@@ -870,12 +877,12 @@ public class FromCanonical {
             if (deploymentArtifact.getArtifactRef() != null) {
                 if (artifacts.containsKey(deploymentArtifact.getArtifactRef().getLocalPart())) {
                     output.put(
-                        deploymentArtifact.getArtifactRef().getLocalPart(),
-                        artifacts.get(deploymentArtifact.getArtifactRef().getLocalPart())
+                            deploymentArtifact.getArtifactRef().getLocalPart(),
+                            artifacts.get(deploymentArtifact.getArtifactRef().getLocalPart())
                     );
                 } else {
                     output.put(deploymentArtifact.getArtifactRef().getLocalPart(),
-                        convertArtifactReference(deploymentArtifact.getArtifactRef()));
+                            convertArtifactReference(deploymentArtifact.getArtifactRef()));
                 }
             }
         }
@@ -908,13 +915,13 @@ public class FromCanonical {
             }
         }
         return new YTArtifactDefinition.Builder(
-            getQName(
-                new ArtifactTypeId(node.getType()),
-                node.getType().getNamespaceURI(),
-                node.getType().getLocalPart()
-            ),
-            files.size() > 0 ? files.get(0) : null)
-            .build();
+                getQName(
+                        new ArtifactTypeId(node.getType()),
+                        node.getType().getNamespaceURI(),
+                        node.getType().getLocalPart()
+                ),
+                files.size() > 0 ? files.get(0) : null)
+                .build();
     }
 
     public YTMapRequirementDefinition convert(TRequirementDefinition node) {
@@ -922,9 +929,9 @@ public class FromCanonical {
             return null;
         }
         YTRequirementDefinition.Builder builder = new YTRequirementDefinition.Builder(node.getCapability())
-            .setDescription(convertDocumentation(node.getDocumentation()))
-            .setOccurrences(node.getLowerBound(), node.getUpperBound())
-            .setNode(node.getNode());
+                .setDescription(convertDocumentation(node.getDocumentation()))
+                .setOccurrences(node.getLowerBound(), node.getUpperBound())
+                .setNode(node.getNode());
 
         if (node.getRelationship() != null) {
             YTRelationshipDefinition.Builder relationshipDefBuilder = new YTRelationshipDefinition.Builder(node.getRelationship());
@@ -932,10 +939,10 @@ public class FromCanonical {
         }
 
         return new YTMapRequirementDefinition().setMap(
-            Collections.singletonMap(
-                node.getName(),
-                builder.build()
-            ));
+                Collections.singletonMap(
+                        node.getName(),
+                        builder.build()
+                ));
     }
 
     public QName convert(@NonNull TRequirementType node) {
@@ -945,9 +952,9 @@ public class FromCanonical {
         }
 
         return getQName(
-            new CapabilityTypeId(requiredCapabilityType),
-            requiredCapabilityType.getNamespaceURI(),
-            requiredCapabilityType.getLocalPart()
+                new CapabilityTypeId(requiredCapabilityType),
+                requiredCapabilityType.getNamespaceURI(),
+                requiredCapabilityType.getLocalPart()
         );
     }
 
@@ -956,17 +963,17 @@ public class FromCanonical {
             return null;
         }
         return node.stream()
-            .filter(Objects::nonNull)
-            .collect(Collectors.toMap(TCapabilityDefinition::getName, this::convert));
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(TCapabilityDefinition::getName, this::convert));
     }
 
     public YTCapabilityDefinition convert(TCapabilityDefinition node) {
         return new YTCapabilityDefinition.Builder(convert(node.getCapabilityType(),
-            new CapabilityTypeId(node.getCapabilityType())))
-            .setValidSourceTypes(node.getValidSourceTypes())
-            .setDescription(convertDocumentation(node.getDocumentation()))
-            .setOccurrences(node.getLowerBound(), node.getUpperBound())
-            .build();
+                new CapabilityTypeId(node.getCapabilityType())))
+                .setValidSourceTypes(node.getValidSourceTypes())
+                .setDescription(convertDocumentation(node.getDocumentation()))
+                .setOccurrences(node.getLowerBound(), node.getUpperBound())
+                .build();
     }
 
     public QName convert(QName node, DefinitionsChildId id) {
@@ -974,9 +981,9 @@ public class FromCanonical {
             return null;
         }
         return getQName(
-            id,
-            node.getNamespaceURI(),
-            node.getLocalPart()
+                id,
+                node.getNamespaceURI(),
+                node.getLocalPart()
         );
     }
 
@@ -985,14 +992,14 @@ public class FromCanonical {
             return null;
         }
         return node.stream()
-            .filter(Objects::nonNull)
-            .collect(Collectors.toMap(
-                TInterface::getName,
-                entry -> new YTInterfaceDefinition.Builder<>()
-                    .setType(new QName(type))
-                    .addOperations(convertOperations(entry.getOperations(), new ArrayList<>()))
-                    .build()
-            ));
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(
+                        TInterface::getName,
+                        entry -> new YTInterfaceDefinition.Builder<>()
+                                .setType(new QName(type))
+                                .addOperations(convertOperations(entry.getOperations(), new ArrayList<>()))
+                                .build()
+                ));
     }
 
     public Map<String, YTPropertyAssignmentOrDefinition> convert(TParameter node) {
@@ -1000,10 +1007,10 @@ public class FromCanonical {
             return null;
         }
         return Collections.singletonMap(
-            node.getName(),
-            new YTPropertyDefinition.Builder(convertType(node.getType()))
-                .setRequired(node.getRequired())
-                .build()
+                node.getName(),
+                new YTPropertyDefinition.Builder(convertType(node.getType()))
+                        .setRequired(node.getRequired())
+                        .build()
         );
     }
 
@@ -1017,11 +1024,11 @@ public class FromCanonical {
         }
 
         return Collections.singletonMap(
-            node.getName(),
-            new YTArtifactDefinition.Builder(this.convert(node.getType(), new ArtifactTypeId(node.getType())), node.getFile())
-                .setDescription(node.getDescription())
-                .setDeployPath(node.getDeployPath())
-                .build()
+                node.getName(),
+                new YTArtifactDefinition.Builder(this.convert(node.getType(), new ArtifactTypeId(node.getType())), node.getFile())
+                        .setDescription(node.getDescription())
+                        .setDeployPath(node.getDeployPath())
+                        .build()
         );
     }
 
@@ -1033,9 +1040,9 @@ public class FromCanonical {
         Map<String, YTOperationDefinition> ops = new HashMap<>();
         node.getOperations().forEach((key, value) -> ops.putAll(convert(value)));
         YTInterfaceType.Builder interfaceBuilder = new YTInterfaceType.Builder()
-            .setDescription(node.getDescription())
-            .setOperations(ops)
-            .setDerivedFrom(convert(node.getDerivedFrom(), node.getClass()));
+                .setDescription(node.getDescription())
+                .setOperations(ops)
+                .setDerivedFrom(convert(node.getDerivedFrom(), node.getClass()));
 
         String typeName = node.getName();
         if (Objects.nonNull(node.getTargetNamespace()) && !node.getTargetNamespace().isEmpty()) {
@@ -1052,16 +1059,16 @@ public class FromCanonical {
 
     public Map<String, YTCapabilityAssignment> convert(TCapability node) {
         if (Objects.isNull(node) ||
-            // skip empty capability assignments
-            node.getProperties() == null) {
+                // skip empty capability assignments
+                node.getProperties() == null) {
             return new HashMap<>();
         }
 
         return Collections.singletonMap(
-            node.getName(),
-            new YTCapabilityAssignment.Builder()
-                .setProperties(convert(node.getProperties()))
-                .build()
+                node.getName(),
+                new YTCapabilityAssignment.Builder()
+                        .setProperties(convert(node.getProperties()))
+                        .build()
         );
     }
 
@@ -1088,8 +1095,8 @@ public class FromCanonical {
         }
 
         return new YTMapRequirementAssignment().setMap(Collections.singletonMap(
-            node.getName(),
-            builder.build()
+                node.getName(),
+                builder.build()
         ));
     }
 
@@ -1098,50 +1105,52 @@ public class FromCanonical {
             return null;
         }
         return nodes.stream()
-            .filter(Objects::nonNull)
-            .flatMap(node -> {
-                if (node instanceof TRelationshipTemplate) {
-                    return convert((TRelationshipTemplate) node).entrySet().stream();
-                } else if (node instanceof TArtifactType) {
-                    return convert((TArtifactType) node).entrySet().stream();
-                } else if (node instanceof TCapabilityType) {
-                    return convert((TCapabilityType) node).entrySet().stream();
-                } else if (node instanceof TRelationshipType) {
-                    return convert((TRelationshipType) node).entrySet().stream();
-                } else if (node instanceof TNodeType) {
-                    return convert((TNodeType) node).entrySet().stream();
-                } else if (node instanceof TPolicyType) {
-                    return convert((TPolicyType) node).entrySet().stream();
-                } else if (node instanceof TPolicy) {
-                    return convert((TPolicy) node).entrySet().stream();
-                } else if (node instanceof ParameterDefinition) {
-                    return convert((ParameterDefinition) node).entrySet().stream();
-                } else if (node instanceof TInterfaceDefinition) {
-                    return convert((TInterfaceDefinition) node).entrySet().stream();
-                } else if (node instanceof TOperationDefinition) {
-                    return convert((TOperationDefinition) node).entrySet().stream();
-                } else if (node instanceof TArtifact) {
-                    return convert((TArtifact) node).entrySet().stream();
-                } else if (node instanceof TInterfaceType) {
-                    return convert((TInterfaceType) node).entrySet().stream();
-                } else if (node instanceof TDataType) {
-                    return convert((TDataType) node).entrySet().stream();
-                } else if (node instanceof TGroupDefinition) {
-                    return convert((TGroupDefinition) node).entrySet().stream();
-                } else if (node instanceof TGroupType) {
-                    return convert((TGroupType) node).entrySet().stream();
-                } else if (node instanceof TCapability) {
-                    return convert((TCapability) node).entrySet().stream();
-                } else if (node instanceof TDeploymentArtifact) {
-                    return convert((TDeploymentArtifact) node).entrySet().stream();
-                } else if (node instanceof TParameter) {
-                    return convert((TParameter) node).entrySet().stream();
-                }
-                throw new AssertionError();
-            })
-            .peek(entry -> LOGGER.debug("entry: {}", entry))
-            .filter(Objects::nonNull)
-            .collect(Collectors.toMap(Map.Entry::getKey, entry -> (K) entry.getValue()));
+                .filter(Objects::nonNull)
+                .flatMap(node -> {
+                    if (node instanceof TRelationshipTemplate) {
+                        return convert((TRelationshipTemplate) node).entrySet().stream();
+                    } else if (node instanceof TArtifactType) {
+                        return convert((TArtifactType) node).entrySet().stream();
+                    } else if (node instanceof TCapabilityType) {
+                        return convert((TCapabilityType) node).entrySet().stream();
+                    } else if (node instanceof TRelationshipType) {
+                        return convert((TRelationshipType) node).entrySet().stream();
+                    } else if (node instanceof TNodeType) {
+                        return convert((TNodeType) node).entrySet().stream();
+                    } else if (node instanceof TPolicyType) {
+                        return convert((TPolicyType) node).entrySet().stream();
+                    } else if (node instanceof TPolicy) {
+                        return convert((TPolicy) node).entrySet().stream();
+                    } else if (node instanceof ParameterDefinition) {
+                        return convert((ParameterDefinition) node).entrySet().stream();
+                    } else if (node instanceof TInterfaceDefinition) {
+                        return convert((TInterfaceDefinition) node).entrySet().stream();
+                    } else if (node instanceof TOperationDefinition) {
+                        return convert((TOperationDefinition) node).entrySet().stream();
+                    } else if (node instanceof TArtifact) {
+                        return convert((TArtifact) node).entrySet().stream();
+                    } else if (node instanceof TInterfaceType) {
+                        return convert((TInterfaceType) node).entrySet().stream();
+                    } else if (node instanceof TDataType) {
+                        return convert((TDataType) node).entrySet().stream();
+                    } else if (node instanceof TGroupDefinition) {
+                        return convert((TGroupDefinition) node).entrySet().stream();
+                    } else if (node instanceof TGroupType) {
+                        return convert((TGroupType) node).entrySet().stream();
+                    } else if (node instanceof TCapability) {
+                        return convert((TCapability) node).entrySet().stream();
+                    } else if (node instanceof TDeploymentArtifact) {
+                        return convert((TDeploymentArtifact) node).entrySet().stream();
+                    } else if (node instanceof TParameter) {
+                        return convert((TParameter) node).entrySet().stream();
+                    } else if (node instanceof TWorkflow) {
+                        return convert((TWorkflow) node).entrySet().stream();
+                    }
+                    throw new AssertionError();
+                })
+                .peek(entry -> LOGGER.debug("entry: {}", entry))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> (K) entry.getValue()));
     }
 
     private Map<String, YTDataType> convert(TDataType node) {
@@ -1151,8 +1160,8 @@ public class FromCanonical {
         String nodeFullName = this.getFullName(node);
         YTDataType.Builder builder = convert(node, new YTDataType.Builder(), TDataType.class);
         return Collections.singletonMap(
-            nodeFullName,
-            builder.setConstraints(convertConstraints(node.getConstraints())).build()
+                nodeFullName,
+                builder.setConstraints(convertConstraints(node.getConstraints())).build()
         );
     }
 
@@ -1161,14 +1170,14 @@ public class FromCanonical {
             return new HashMap<>();
         }
         return Collections.singletonMap(
-            node.getKey(),
-            new YTParameterDefinition.Builder()
-                .setType(node.getType())
-                .setDescription(node.getDescription())
-                .setRequired(node.getRequired())
-                .setDefault(node.getDefaultValue())
-                .setValue(node.getValue())
-                .build()
+                node.getKey(),
+                new YTParameterDefinition.Builder()
+                        .setType(node.getType())
+                        .setDescription(node.getDescription())
+                        .setRequired(node.getRequired())
+                        .setDefault(node.getDefaultValue())
+                        .setValue(node.getValue())
+                        .build()
         );
     }
 
@@ -1177,12 +1186,12 @@ public class FromCanonical {
             return new HashMap<>();
         }
         return Collections.singletonMap(
-            node.getName(),
-            new YTInterfaceDefinition.Builder<>()
-                .setType(node.getType())
-                .setInputs(convert(node.getInputs()))
-                .setOperations(convert(node.getOperations()))
-                .build());
+                node.getName(),
+                new YTInterfaceDefinition.Builder<>()
+                        .setType(node.getType())
+                        .setInputs(convert(node.getInputs()))
+                        .setOperations(convert(node.getOperations()))
+                        .build());
     }
 
     private Map<String, YTOperationDefinition> convert(TOperationDefinition node) {
@@ -1190,13 +1199,27 @@ public class FromCanonical {
             return new HashMap<>();
         }
         return Collections.singletonMap(
-            node.getName(),
-            new YTOperationDefinition.Builder()
-                .setDescription(node.getDescription())
-                .setInputs(convert(node.getInputs()))
-                .setOutputs(convert(node.getOutputs()))
-                .setImplementation(convert(node.getImplementation()))
-                .build());
+                node.getName(),
+                new YTOperationDefinition.Builder()
+                        .setDescription(node.getDescription())
+                        .setInputs(convert(node.getInputs()))
+                        .setOutputs(convert(node.getOutputs()))
+                        .setImplementation(convert(node.getImplementation()))
+                        .build());
+    }
+
+    private Map<String, YTWorkflow> convert(TWorkflow node) {
+        if (Objects.isNull(node)) {
+            return new HashMap<>();
+        }
+        return Collections.singletonMap(
+                node.getName(),
+                new YTWorkflow.Builder()
+                        .setDescription(node.getDescription())
+                        .setInputs(convert(node.getInputs()))
+                        .setOutputs(convert(node.getOutputs()))
+                        .setImplementation(convert(node.getImplementation()))
+                        .build());
     }
 
     private Map<String, YTGroupDefinition> convert(TGroupDefinition node) {
@@ -1210,12 +1233,12 @@ public class FromCanonical {
         }
 
         return Collections.singletonMap(
-            node.getName(),
-            new YTGroupDefinition.Builder(node.getType())
-                .setDescription(node.getDescription())
-                .setMembers(node.getMembers())
-                .setProperties(convert(node.getProperties()))
-                .build());
+                node.getName(),
+                new YTGroupDefinition.Builder(node.getType())
+                        .setDescription(node.getDescription())
+                        .setMembers(node.getMembers())
+                        .setProperties(convert(node.getProperties()))
+                        .build());
     }
 
     @Nullable
@@ -1243,15 +1266,15 @@ public class FromCanonical {
     private QName getQName(DefinitionsChildId id, String namespaceURI, String localPart) {
         setImportDefinition(id);
         return new QName(
-            namespaceURI,
-            localPart,
-            this.getNamespacePrefix(namespaceURI)
+                namespaceURI,
+                localPart,
+                this.getNamespacePrefix(namespaceURI)
         );
     }
 
     private void setImportDefinition(DefinitionsChildId id) {
         this.importDefinitions.put(
-            id, repository.getDefinitions(id)
+                id, repository.getDefinitions(id)
         );
     }
 
@@ -1279,25 +1302,25 @@ public class FromCanonical {
             }
             if (value instanceof Map) {
                 builder.setValue(
-                    ((Map<?, ?>) value).entrySet().stream()
-                        .map(entry ->
-                            new LinkedHashMap.SimpleEntry<>(
-                                String.valueOf(entry.getKey()),
-                                convert(entry.getValue())
-                            )
-                        )
-                        .collect(Collectors.toMap(
-                            Map.Entry::getKey,
-                            Map.Entry::getValue
-                        ))
+                        ((Map<?, ?>) value).entrySet().stream()
+                                .map(entry ->
+                                        new LinkedHashMap.SimpleEntry<>(
+                                                String.valueOf(entry.getKey()),
+                                                convert(entry.getValue())
+                                        )
+                                )
+                                .collect(Collectors.toMap(
+                                        Map.Entry::getKey,
+                                        Map.Entry::getValue
+                                ))
                 );
                 return builder.build();
             }
             if (value instanceof List) {
                 builder.setValue(
-                    ((List<?>) value).stream()
-                        .map(PropertyConverter::convert)
-                        .collect(Collectors.toList())
+                        ((List<?>) value).stream()
+                                .map(PropertyConverter::convert)
+                                .collect(Collectors.toList())
                 );
                 return builder.build();
             }

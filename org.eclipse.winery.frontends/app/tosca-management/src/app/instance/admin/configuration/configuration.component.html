@@ -118,6 +118,10 @@
            [checked]="config.features.patternDetection">
     <label for="patternDetection">Pattern Detection</label>
     <br>
+    <input type="checkbox" [(ngModel)]="config.features.exportNormativeTypes" id="exportNormativeTypes"
+           name="exportNormativeTypes"
+           [checked]="config.features.exportNormativeTypes">
+    <label for="exportNormativeTypes">Export YAML Normative Types</label>
     <input type="checkbox" [(ngModel)]="config.features.researchObject" id="researchObject" name="researchObject"
            [checked]="config.features.researchObject">
     <label for="researchObject">Research Object</label>

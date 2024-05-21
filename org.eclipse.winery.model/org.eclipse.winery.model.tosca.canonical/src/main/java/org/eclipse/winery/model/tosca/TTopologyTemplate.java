@@ -14,6 +14,16 @@
 
 package org.eclipse.winery.model.tosca;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.eclipse.jdt.annotation.NonNull;
+import org.eclipse.jdt.annotation.Nullable;
+
+import org.eclipse.winery.model.tosca.extensions.OTParticipant;
+import org.eclipse.winery.model.tosca.extensions.kvproperties.ParameterDefinition;
+import org.eclipse.winery.model.tosca.visitor.Visitor;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -28,31 +38,21 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlType;
 
-import org.eclipse.winery.model.tosca.extensions.OTParticipant;
-import org.eclipse.winery.model.tosca.extensions.kvproperties.ParameterDefinition;
-import org.eclipse.winery.model.tosca.visitor.Visitor;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import org.eclipse.jdt.annotation.NonNull;
-import org.eclipse.jdt.annotation.Nullable;
-
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "tTopologyTemplate", propOrder = {
-    "nodeTemplateOrRelationshipTemplate",
-    "groups",
-    "policies",
-    "inputs",
-    "outputs",
-    "participants"
+        "nodeTemplateOrRelationshipTemplate",
+        "groups",
+        "policies",
+        "inputs",
+        "outputs",
+        "participants",
+        "workflows"
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class TTopologyTemplate extends TExtensibleElements {
-
     @XmlElements( {
-        @XmlElement(name = "RelationshipTemplate", type = TRelationshipTemplate.class),
-        @XmlElement(name = "NodeTemplate", type = TNodeTemplate.class)
+            @XmlElement(name = "RelationshipTemplate", type = TRelationshipTemplate.class),
+            @XmlElement(name = "NodeTemplate", type = TNodeTemplate.class)
     })
     protected List<TEntityTemplate> nodeTemplateOrRelationshipTemplate;
 
@@ -65,6 +65,9 @@ public class TTopologyTemplate extends TExtensibleElements {
     protected List<ParameterDefinition> inputs;
     @JsonProperty("outputs")
     protected List<ParameterDefinition> outputs;
+    // added to support conversion from/to YAML workflows
+    @JsonProperty("workflows")
+    protected List<TWorkflow> workflows;
 
     @XmlElementWrapper(name = "Participants")
     @XmlElement(name = "Participant")
@@ -82,6 +85,7 @@ public class TTopologyTemplate extends TExtensibleElements {
         this.outputs = builder.outputs;
         this.groups = builder.groups;
         this.participants = builder.participants;
+        this.workflows = builder.workflows;
     }
 
     @Override
@@ -91,15 +95,16 @@ public class TTopologyTemplate extends TExtensibleElements {
         if (!super.equals(o)) return false;
         TTopologyTemplate that = (TTopologyTemplate) o;
         return Objects.equals(nodeTemplateOrRelationshipTemplate, that.nodeTemplateOrRelationshipTemplate) &&
-            Objects.equals(policies, that.policies) &&
-            Objects.equals(inputs, that.inputs) &&
-            Objects.equals(outputs, that.outputs) &&
-            Objects.equals(participants, that.participants);
+                Objects.equals(policies, that.policies) &&
+                Objects.equals(inputs, that.inputs) &&
+                Objects.equals(outputs, that.outputs) &&
+                Objects.equals(workflows, that.workflows) &&
+                Objects.equals(participants, that.participants);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), nodeTemplateOrRelationshipTemplate, policies, inputs, outputs, participants);
+        return Objects.hash(super.hashCode(), nodeTemplateOrRelationshipTemplate, policies, inputs, outputs, workflows, participants);
     }
 
     @JsonIgnore
@@ -116,9 +121,9 @@ public class TTopologyTemplate extends TExtensibleElements {
     public TEntityTemplate getNodeTemplateOrRelationshipTemplate(String id) {
         Objects.requireNonNull(id);
         return this.getNodeTemplateOrRelationshipTemplate().stream()
-            .filter(x -> id.equals(x.getId()))
-            .findAny()
-            .orElse(null);
+                .filter(x -> id.equals(x.getId()))
+                .findAny()
+                .orElse(null);
     }
 
     /**
@@ -127,10 +132,10 @@ public class TTopologyTemplate extends TExtensibleElements {
     @NonNull
     public List<TNodeTemplate> getNodeTemplates() {
         return this.getNodeTemplateOrRelationshipTemplate()
-            .stream()
-            .filter(x -> x instanceof TNodeTemplate)
-            .map(TNodeTemplate.class::cast)
-            .collect(Collectors.toList());
+                .stream()
+                .filter(x -> x instanceof TNodeTemplate)
+                .map(TNodeTemplate.class::cast)
+                .collect(Collectors.toList());
     }
 
     public void setNodeTemplates(List<TNodeTemplate> nodeTemplates) {
@@ -147,9 +152,9 @@ public class TTopologyTemplate extends TExtensibleElements {
     public TNodeTemplate getNodeTemplate(String id) {
         Objects.requireNonNull(id);
         return this.getNodeTemplates().stream()
-            .filter(x -> id.equals(x.getId()))
-            .findAny()
-            .orElse(null);
+                .filter(x -> id.equals(x.getId()))
+                .findAny()
+                .orElse(null);
     }
 
     /**
@@ -158,10 +163,10 @@ public class TTopologyTemplate extends TExtensibleElements {
     @NonNull
     public List<TRelationshipTemplate> getRelationshipTemplates() {
         return this.getNodeTemplateOrRelationshipTemplate()
-            .stream()
-            .filter(x -> x instanceof TRelationshipTemplate)
-            .map(TRelationshipTemplate.class::cast)
-            .collect(Collectors.toList());
+                .stream()
+                .filter(x -> x instanceof TRelationshipTemplate)
+                .map(TRelationshipTemplate.class::cast)
+                .collect(Collectors.toList());
     }
 
     public void setRelationshipTemplates(List<TRelationshipTemplate> relationshipTemplates) {
@@ -178,9 +183,9 @@ public class TTopologyTemplate extends TExtensibleElements {
     public TRelationshipTemplate getRelationshipTemplate(String id) {
         Objects.requireNonNull(id);
         return this.getRelationshipTemplates().stream()
-            .filter(x -> id.equals(x.getId()))
-            .findAny()
-            .orElse(null);
+                .filter(x -> id.equals(x.getId()))
+                .findAny()
+                .orElse(null);
     }
 
     public void addNodeTemplate(TNodeTemplate nt) {
@@ -218,6 +223,19 @@ public class TTopologyTemplate extends TExtensibleElements {
         this.outputs = outputs;
     }
 
+    @NonNull
+    public List<TWorkflow> getWorkflows() {
+        if (this.workflows == null) {
+            this.workflows = new ArrayList<>();
+        }
+
+        return workflows;
+    }
+
+    public void setWorkflows(List<TWorkflow> workflows) {
+        this.workflows = workflows;
+    }
+
     @Nullable
     public List<TGroupDefinition> getGroups() {
         return groups;
@@ -253,6 +271,7 @@ public class TTopologyTemplate extends TExtensibleElements {
         private List<TPolicy> policies;
         private List<ParameterDefinition> inputs;
         private List<ParameterDefinition> outputs;
+        private List<TWorkflow> workflows;
         private List<TGroupDefinition> groups;
         private List<OTParticipant> participants;
 
@@ -332,6 +351,25 @@ public class TTopologyTemplate extends TExtensibleElements {
 
         public Builder setOutputs(List<ParameterDefinition> outputs) {
             this.outputs = outputs;
+            return this;
+        }
+
+        public Builder setWorkflows(List<TWorkflow> workflows) {
+            this.workflows = workflows;
+            return this;
+        }
+
+        public Builder addWorkflows(List<TWorkflow> workflows) {
+            if (workflows == null || workflows.isEmpty()) {
+                return this;
+            }
+
+            if (this.workflows == null) {
+                this.workflows = new ArrayList<>(workflows);
+            } else {
+                this.workflows.addAll(workflows);
+            }
+
             return this;
         }
 

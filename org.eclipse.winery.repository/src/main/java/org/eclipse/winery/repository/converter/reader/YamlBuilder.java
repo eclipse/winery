@@ -14,23 +14,10 @@
 
 package org.eclipse.winery.repository.converter.reader;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TimeZone;
-import java.util.function.BiFunction;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.xml.namespace.QName;
+import org.eclipse.collections.api.tuple.Pair;
+import org.eclipse.collections.impl.tuple.Tuples;
+import org.eclipse.jdt.annotation.NonNull;
+import org.eclipse.jdt.annotation.Nullable;
 
 import org.eclipse.winery.common.version.VersionUtils;
 import org.eclipse.winery.model.converter.support.Namespaces;
@@ -81,6 +68,7 @@ import org.eclipse.winery.model.tosca.yaml.YTSubstitutionMappings;
 import org.eclipse.winery.model.tosca.yaml.YTTopologyTemplateDefinition;
 import org.eclipse.winery.model.tosca.yaml.YTTriggerDefinition;
 import org.eclipse.winery.model.tosca.yaml.YTVersion;
+import org.eclipse.winery.model.tosca.yaml.YTWorkflow;
 import org.eclipse.winery.model.tosca.yaml.support.Metadata;
 import org.eclipse.winery.model.tosca.yaml.support.YTListString;
 import org.eclipse.winery.model.tosca.yaml.support.YTMapActivityDefinition;
@@ -94,12 +82,26 @@ import org.eclipse.winery.model.tosca.yaml.support.YamlSpecKeywords;
 import org.eclipse.winery.model.tosca.yaml.tosca.datatypes.Credential;
 import org.eclipse.winery.repository.converter.validator.FieldValidator;
 
-import org.eclipse.collections.api.tuple.Pair;
-import org.eclipse.collections.impl.tuple.Tuples;
-import org.eclipse.jdt.annotation.NonNull;
-import org.eclipse.jdt.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.xml.namespace.QName;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TimeZone;
+import java.util.function.BiFunction;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class YamlBuilder {
     public static final Logger LOGGER = LoggerFactory.getLogger(YamlBuilder.class);
@@ -176,25 +178,25 @@ public class YamlBuilder {
         initPrefix2Namespace(map.get(YamlSpecKeywords.IMPORTS));
 
         YTServiceTemplate.Builder builder = new YTServiceTemplate.Builder(stringValue(
-            map.getOrDefault(YamlSpecKeywords.TOSCA_DEF_VERSION, "")
+                map.getOrDefault(YamlSpecKeywords.TOSCA_DEF_VERSION, "")
         )).setMetadata(buildMetadata(map.get(YamlSpecKeywords.METADATA)))
-            .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
-            .setDslDefinitions(buildMap(map.get(YamlSpecKeywords.DSL_DEFINITIONS),
-                parameter.copy().addContext(YamlSpecKeywords.DSL_DEFINITION).setBuilderOO((obj, p) -> obj)
-            ))
-            .setRepositories(buildMap(map, YamlSpecKeywords.REPOSITORIES, this::buildRepositoryDefinition, parameter))
-            .setImports(buildList(map, YamlSpecKeywords.IMPORTS, this::buildMapImportDefinition, parameter))
-            .setArtifactTypes(buildMap(map, YamlSpecKeywords.ARTIFACT_TYPES, this::buildArtifactType, parameter))
-            .setDataTypes(buildMap(map, YamlSpecKeywords.DATA_TYPES, this::buildDataType, parameter))
-            .setCapabilityTypes(buildMap(map, YamlSpecKeywords.CAPABILITY_TYPES, this::buildCapabilityType, parameter))
-            .setInterfaceTypes(buildMap(map, YamlSpecKeywords.INTERFACE_TYPES, this::buildInterfaceType, parameter))
-            .setRelationshipTypes(buildMap(map, YamlSpecKeywords.RELATIONSHIP_TYPES, this::buildRelationshipType, parameter))
-            .setNodeTypes(buildMap(map, YamlSpecKeywords.NODE_TYPES, this::buildNodeType, parameter))
-            .setGroupTypes(buildMap(map, YamlSpecKeywords.GROUP_TYPES, this::buildGroupType, parameter))
-            .setPolicyTypes(buildMap(map, YamlSpecKeywords.POLICY_TYPES, this::buildPolicyType, parameter))
-            .setTopologyTemplate(buildTopologyTemplate(map.get(YamlSpecKeywords.TOPOLOGY_TEMPLATE),
-                parameter.copy().addContext(YamlSpecKeywords.TOPOLOGY_TEMPLATE)
-            ));
+                .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
+                .setDslDefinitions(buildMap(map.get(YamlSpecKeywords.DSL_DEFINITIONS),
+                        parameter.copy().addContext(YamlSpecKeywords.DSL_DEFINITION).setBuilderOO((obj, p) -> obj)
+                ))
+                .setRepositories(buildMap(map, YamlSpecKeywords.REPOSITORIES, this::buildRepositoryDefinition, parameter))
+                .setImports(buildList(map, YamlSpecKeywords.IMPORTS, this::buildMapImportDefinition, parameter))
+                .setArtifactTypes(buildMap(map, YamlSpecKeywords.ARTIFACT_TYPES, this::buildArtifactType, parameter))
+                .setDataTypes(buildMap(map, YamlSpecKeywords.DATA_TYPES, this::buildDataType, parameter))
+                .setCapabilityTypes(buildMap(map, YamlSpecKeywords.CAPABILITY_TYPES, this::buildCapabilityType, parameter))
+                .setInterfaceTypes(buildMap(map, YamlSpecKeywords.INTERFACE_TYPES, this::buildInterfaceType, parameter))
+                .setRelationshipTypes(buildMap(map, YamlSpecKeywords.RELATIONSHIP_TYPES, this::buildRelationshipType, parameter))
+                .setNodeTypes(buildMap(map, YamlSpecKeywords.NODE_TYPES, this::buildNodeType, parameter))
+                .setGroupTypes(buildMap(map, YamlSpecKeywords.GROUP_TYPES, this::buildGroupType, parameter))
+                .setPolicyTypes(buildMap(map, YamlSpecKeywords.POLICY_TYPES, this::buildPolicyType, parameter))
+                .setTopologyTemplate(buildTopologyTemplate(map.get(YamlSpecKeywords.TOPOLOGY_TEMPLATE),
+                        parameter.copy().addContext(YamlSpecKeywords.TOPOLOGY_TEMPLATE)
+                ));
         if (this.exception.hasException()) {
             throw this.exception;
         }
@@ -209,17 +211,18 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) object;
         return new YTTopologyTemplateDefinition.Builder()
-            .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
-            .setInputs(buildMap(map, YamlSpecKeywords.INPUTS, this::buildParameterDefinition, parameter))
-            .setNodeTemplates(buildMap(map, YamlSpecKeywords.NODE_TEMPLATES, this::buildNodeTemplate, parameter))
-            .setRelationshipTemplates(buildMap(map, YamlSpecKeywords.RELATIONSHIP_TEMPLATES, this::buildRelationshipTemplate, parameter))
-            .setGroups(buildMap(map, YamlSpecKeywords.GROUPS, this::buildGroupDefinition, parameter))
-            .setPolicies(buildListMap(map, YamlSpecKeywords.POLICIES, this::buildPolicyDefinition, parameter))
-            .setOutputs(buildMap(map, YamlSpecKeywords.OUTPUTS, this::buildParameterDefinition, parameter))
-            .setSubstitutionMappings(buildSubstitutionMappings(map.get(YamlSpecKeywords.SUBSTITUTION_MAPPINGS),
-                parameter.copy().addContext(YamlSpecKeywords.SUBSTITUTION_MAPPINGS)
-            ))
-            .build();
+                .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
+                .setInputs(buildMap(map, YamlSpecKeywords.INPUTS, this::buildParameterDefinition, parameter))
+                .setNodeTemplates(buildMap(map, YamlSpecKeywords.NODE_TEMPLATES, this::buildNodeTemplate, parameter))
+                .setRelationshipTemplates(buildMap(map, YamlSpecKeywords.RELATIONSHIP_TEMPLATES, this::buildRelationshipTemplate, parameter))
+                .setGroups(buildMap(map, YamlSpecKeywords.GROUPS, this::buildGroupDefinition, parameter))
+                .setPolicies(buildListMap(map, YamlSpecKeywords.POLICIES, this::buildPolicyDefinition, parameter))
+                .setOutputs(buildMap(map, YamlSpecKeywords.OUTPUTS, this::buildParameterDefinition, parameter))
+                .setSubstitutionMappings(buildSubstitutionMappings(map.get(YamlSpecKeywords.SUBSTITUTION_MAPPINGS),
+                        parameter.copy().addContext(YamlSpecKeywords.SUBSTITUTION_MAPPINGS)
+                ))
+                .setWorkflows(buildMap(map, YamlSpecKeywords.WORKFLOWS, this::buildWorkflowDefinition, parameter))
+                .build();
     }
 
     @Nullable
@@ -231,15 +234,15 @@ public class YamlBuilder {
         Map<String, Object> tmp = (Map<String, Object>) object;
         Metadata metadata = new Metadata();
         tmp.entrySet().stream()
-            .filter(entry -> Objects.nonNull(entry.getValue()))
-            .forEach(entry -> {
-                metadata.put(entry.getKey(), stringValue(entry.getValue()));
-                if (entry.getValue() instanceof Date) {
-                    SimpleDateFormat date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSSSSZ");
-                    date.setTimeZone(TimeZone.getTimeZone("UTC"));
-                    metadata.put(entry.getKey(), date.format(entry.getValue()));
-                }
-            });
+                .filter(entry -> Objects.nonNull(entry.getValue()))
+                .forEach(entry -> {
+                    metadata.put(entry.getKey(), stringValue(entry.getValue()));
+                    if (entry.getValue() instanceof Date) {
+                        SimpleDateFormat date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSSSSZ");
+                        date.setTimeZone(TimeZone.getTimeZone("UTC"));
+                        metadata.put(entry.getKey(), date.format(entry.getValue()));
+                    }
+                });
         return metadata;
     }
 
@@ -265,11 +268,11 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) object;
         return new YTRepositoryDefinition.Builder(stringValue(map.get(YamlSpecKeywords.URL)))
-            .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
-            .setCredential(buildCredential(map.get(YamlSpecKeywords.CREDENTIAL),
-                new Parameter<Credential>(parameter.getContext()).addContext(YamlSpecKeywords.CREDENTIAL)
-            ))
-            .build();
+                .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
+                .setCredential(buildCredential(map.get(YamlSpecKeywords.CREDENTIAL),
+                        new Parameter<Credential>(parameter.getContext()).addContext(YamlSpecKeywords.CREDENTIAL)
+                ))
+                .build();
     }
 
     @Nullable
@@ -286,18 +289,18 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         Map<String, String> keys = (Map<String, String>) map.get(YamlSpecKeywords.KEYS);
         return new Credential.Builder(stringValue(map.get(YamlSpecKeywords.TOKEN_TYPE)))
-            .setProtocol(stringValue(map.get(YamlSpecKeywords.PROTOCOL)))
-            .setToken(stringValue(map.get(YamlSpecKeywords.TOKEN)))
-            .setUser(stringValue(map.get(YamlSpecKeywords.USER)))
-            .setKeys(keys)
-            .build();
+                .setProtocol(stringValue(map.get(YamlSpecKeywords.PROTOCOL)))
+                .setToken(stringValue(map.get(YamlSpecKeywords.TOKEN)))
+                .setUser(stringValue(map.get(YamlSpecKeywords.USER)))
+                .setKeys(keys)
+                .build();
     }
 
     @Nullable
     public YTMapImportDefinition buildMapImportDefinition(Object object, Parameter<YTMapImportDefinition> parameter) {
         YTMapImportDefinition mapImportDefinition = new YTMapImportDefinition();
         mapImportDefinition.put(stringValue(parameter.getValue()), buildImportDefinition(object,
-            new Parameter<>(parameter.getContext())
+                new Parameter<>(parameter.getContext())
         ));
         return mapImportDefinition;
     }
@@ -316,10 +319,10 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) object;
         return new YTImportDefinition.Builder(stringValue(map.get(YamlSpecKeywords.FILE)))
-            .setRepository(buildQName(stringValue(map.get(YamlSpecKeywords.REPOSITORY))))
-            .setNamespaceUri(stringValue(map.get(YamlSpecKeywords.NAMESPACE_URI)))
-            .setNamespacePrefix(stringValue(map.get(YamlSpecKeywords.NAMESPACE_PREFIX)))
-            .build();
+                .setRepository(buildQName(stringValue(map.get(YamlSpecKeywords.REPOSITORY))))
+                .setNamespaceUri(stringValue(map.get(YamlSpecKeywords.NAMESPACE_URI)))
+                .setNamespacePrefix(stringValue(map.get(YamlSpecKeywords.NAMESPACE_PREFIX)))
+                .build();
     }
 
     @Nullable
@@ -350,14 +353,14 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) object;
         return buildEntityType(object,
-            new Parameter<YTArtifactType.Builder>(parameter.getContext())
-                .setBuilder(new YTArtifactType.Builder())
-                .setClazz(YTArtifactType.class))
-            .setMimeType(stringValue(map.get(YamlSpecKeywords.MIME_TYPE)))
-            .setFileExt(buildListString(map.get(YamlSpecKeywords.FILE_EXT),
-                new Parameter<List<String>>(parameter.getContext()).addContext(YamlSpecKeywords.FILE_EXT)
-            ))
-            .build();
+                new Parameter<YTArtifactType.Builder>(parameter.getContext())
+                        .setBuilder(new YTArtifactType.Builder())
+                        .setClazz(YTArtifactType.class))
+                .setMimeType(stringValue(map.get(YamlSpecKeywords.MIME_TYPE)))
+                .setFileExt(buildListString(map.get(YamlSpecKeywords.FILE_EXT),
+                        new Parameter<List<String>>(parameter.getContext()).addContext(YamlSpecKeywords.FILE_EXT)
+                ))
+                .build();
     }
 
     @NonNull
@@ -368,12 +371,12 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) object;
         return parameter.getBuilder()
-            .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
-            .setVersion(buildVersion(map.get(YamlSpecKeywords.VERSION)))
-            .setDerivedFrom(buildQName(stringValue(map.get(YamlSpecKeywords.DERIVED_FROM))))
-            .setProperties(buildMap(map, YamlSpecKeywords.PROPERTIES, this::buildPropertyDefinition, YTPropertyDefinition.class, parameter))
-            .setAttributes(buildMap(map, YamlSpecKeywords.ATTRIBUTES, this::buildAttributeDefinition, parameter))
-            .setMetadata(buildMetadata(map.get(YamlSpecKeywords.METADATA)));
+                .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
+                .setVersion(buildVersion(map.get(YamlSpecKeywords.VERSION)))
+                .setDerivedFrom(buildQName(stringValue(map.get(YamlSpecKeywords.DERIVED_FROM))))
+                .setProperties(buildMap(map, YamlSpecKeywords.PROPERTIES, this::buildPropertyDefinition, YTPropertyDefinition.class, parameter))
+                .setAttributes(buildMap(map, YamlSpecKeywords.ATTRIBUTES, this::buildAttributeDefinition, parameter))
+                .setMetadata(buildMetadata(map.get(YamlSpecKeywords.METADATA)));
     }
 
     @Nullable
@@ -396,17 +399,17 @@ public class YamlBuilder {
             type = "string";
         }
         return new YTPropertyDefinition.Builder(buildQName(type))
-            .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
-            .setRequired(buildRequired(map.get(YamlSpecKeywords.REQUIRED)))
-            .setDefault(map.get(YamlSpecKeywords.DEFAULT))
-            .setStatus(buildStatus(map.get(YamlSpecKeywords.STATUS)))
-            .addConstraints(buildList(map, YamlSpecKeywords.CONSTRAINTS, this::buildConstraintClause, parameter))
-            .setEntrySchema(buildSchemaDefinition(map.get(YamlSpecKeywords.ENTRY_SCHEMA),
-                new Parameter<YTSchemaDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.ENTRY_SCHEMA)
-            ))
-            .setKeySchema(buildSchemaDefinition(map.get(YamlSpecKeywords.KEY_SCHEMA),
-                new Parameter<YTSchemaDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.KEY_SCHEMA)))
-            .build();
+                .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
+                .setRequired(buildRequired(map.get(YamlSpecKeywords.REQUIRED)))
+                .setDefault(map.get(YamlSpecKeywords.DEFAULT))
+                .setStatus(buildStatus(map.get(YamlSpecKeywords.STATUS)))
+                .addConstraints(buildList(map, YamlSpecKeywords.CONSTRAINTS, this::buildConstraintClause, parameter))
+                .setEntrySchema(buildSchemaDefinition(map.get(YamlSpecKeywords.ENTRY_SCHEMA),
+                        new Parameter<YTSchemaDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.ENTRY_SCHEMA)
+                ))
+                .setKeySchema(buildSchemaDefinition(map.get(YamlSpecKeywords.KEY_SCHEMA),
+                        new Parameter<YTSchemaDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.KEY_SCHEMA)))
+                .build();
     }
 
     @Nullable
@@ -437,9 +440,9 @@ public class YamlBuilder {
                 return YTStatusValue.deprecated;
             default:
                 assert ("supported".equals(status) ||
-                    "unsupported".equals(status) ||
-                    "experimental".equals(status) ||
-                    "deprecated".equals(status));
+                        "unsupported".equals(status) ||
+                        "experimental".equals(status) ||
+                        "deprecated".equals(status));
                 return null;
         }
     }
@@ -454,11 +457,11 @@ public class YamlBuilder {
         switch (parameter.getValue()) {
             case YamlSpecKeywords.IN_RANGE:
                 builder.setList(buildListString(object,
-                    new Parameter<List<String>>(parameter.getContext()).addContext(YamlSpecKeywords.IN_RANGE)));
+                        new Parameter<List<String>>(parameter.getContext()).addContext(YamlSpecKeywords.IN_RANGE)));
                 break;
             case YamlSpecKeywords.VALID_VALUES:
                 builder.setList(buildListString(object,
-                    new Parameter<List<String>>(parameter.getContext()).addContext(YamlSpecKeywords.VALID_VALUES)));
+                        new Parameter<List<String>>(parameter.getContext()).addContext(YamlSpecKeywords.VALID_VALUES)));
                 break;
             default:
                 builder.setKey(parameter.getValue());
@@ -488,13 +491,13 @@ public class YamlBuilder {
             @SuppressWarnings("unchecked")
             Map<String, Object> map = (Map<String, Object>) object;
             return new YTSchemaDefinition.Builder(buildQName(stringValue(map.get(YamlSpecKeywords.TYPE))))
-                .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
-                .setConstraints(buildList(map, YamlSpecKeywords.CONSTRAINTS, this::buildConstraintClause, parameter))
-                .setEntrySchema(buildSchemaDefinition(map.get(YamlSpecKeywords.ENTRY_SCHEMA),
-                    new Parameter<YTSchemaDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.ENTRY_SCHEMA)))
-                .setKeySchema(buildSchemaDefinition(map.get(YamlSpecKeywords.KEY_SCHEMA),
-                    new Parameter<YTSchemaDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.KEY_SCHEMA)))
-                .build();
+                    .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
+                    .setConstraints(buildList(map, YamlSpecKeywords.CONSTRAINTS, this::buildConstraintClause, parameter))
+                    .setEntrySchema(buildSchemaDefinition(map.get(YamlSpecKeywords.ENTRY_SCHEMA),
+                            new Parameter<YTSchemaDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.ENTRY_SCHEMA)))
+                    .setKeySchema(buildSchemaDefinition(map.get(YamlSpecKeywords.KEY_SCHEMA),
+                            new Parameter<YTSchemaDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.KEY_SCHEMA)))
+                    .build();
         }
     }
 
@@ -509,15 +512,15 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) object;
         return new YTAttributeDefinition.Builder(buildQName(stringValue(map.get(YamlSpecKeywords.TYPE))))
-            .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
-            .setDefault(map.get(YamlSpecKeywords.DEFAULT))
-            .setStatus(buildStatus(map.get(YamlSpecKeywords.STATUS)))
-            .setEntrySchema(buildSchemaDefinition(map.get(YamlSpecKeywords.ENTRY_SCHEMA),
-                new Parameter<YTSchemaDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.ENTRY_SCHEMA)
-            ))
-            .setKeySchema(buildSchemaDefinition(map.get(YamlSpecKeywords.KEY_SCHEMA),
-                new Parameter<YTSchemaDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.KEY_SCHEMA)))
-            .build();
+                .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
+                .setDefault(map.get(YamlSpecKeywords.DEFAULT))
+                .setStatus(buildStatus(map.get(YamlSpecKeywords.STATUS)))
+                .setEntrySchema(buildSchemaDefinition(map.get(YamlSpecKeywords.ENTRY_SCHEMA),
+                        new Parameter<YTSchemaDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.ENTRY_SCHEMA)
+                ))
+                .setKeySchema(buildSchemaDefinition(map.get(YamlSpecKeywords.KEY_SCHEMA),
+                        new Parameter<YTSchemaDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.KEY_SCHEMA)))
+                .build();
     }
 
     @Nullable
@@ -527,16 +530,16 @@ public class YamlBuilder {
         }
         if (!(object instanceof List)) {
             exception.add(new InvalidToscaSyntax(
-                "The value '{}' is invalid. Only arrays of form '[a,b]' are allowed",
-                object
+                    "The value '{}' is invalid. Only arrays of form '[a,b]' are allowed",
+                    object
             ).setContext(new ArrayList<>(parameter.getContext())));
             return new ArrayList<>();
         }
         @SuppressWarnings("unchecked")
         List<String> tmp = ((List<Object>) object).stream()
-            .map(this::stringValue)
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
+                .map(this::stringValue)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
         return tmp;
     }
 
@@ -548,11 +551,11 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) object;
         return buildEntityType(object,
-            new Parameter<YTDataType.Builder>(parameter.getContext())
-                .setBuilder(new YTDataType.Builder())
-                .setClazz(YTDataType.class))
-            .setConstraints(buildList(map, YamlSpecKeywords.CONSTRAINTS, this::buildConstraintClause, parameter))
-            .build();
+                new Parameter<YTDataType.Builder>(parameter.getContext())
+                        .setBuilder(new YTDataType.Builder())
+                        .setClazz(YTDataType.class))
+                .setConstraints(buildList(map, YamlSpecKeywords.CONSTRAINTS, this::buildConstraintClause, parameter))
+                .build();
     }
 
     @Nullable
@@ -563,13 +566,13 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) object;
         return buildEntityType(object,
-            new Parameter<YTCapabilityType.Builder>(parameter.getContext())
-                .setBuilder(new YTCapabilityType.Builder())
-                .setClazz(YTCapabilityType.class))
-            .setValidSourceTypes(buildListQName(buildListString(map.get(YamlSpecKeywords.VALID_SOURCE_TYPES),
-                new Parameter<List<String>>(parameter.getContext()).addContext(YamlSpecKeywords.VALID_SOURCE_TYPES)
-            )))
-            .build();
+                new Parameter<YTCapabilityType.Builder>(parameter.getContext())
+                        .setBuilder(new YTCapabilityType.Builder())
+                        .setClazz(YTCapabilityType.class))
+                .setValidSourceTypes(buildListQName(buildListString(map.get(YamlSpecKeywords.VALID_SOURCE_TYPES),
+                        new Parameter<List<String>>(parameter.getContext()).addContext(YamlSpecKeywords.VALID_SOURCE_TYPES)
+                )))
+                .build();
     }
 
     @Nullable
@@ -578,8 +581,8 @@ public class YamlBuilder {
             return null;
         }
         return list.stream().map(this::buildQName)
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
     @Nullable
@@ -590,15 +593,15 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) object;
         return buildEntityType(object,
-            new Parameter<YTInterfaceType.Builder>(parameter.getContext())
-                .setBuilder(new YTInterfaceType.Builder())
-                .setClazz(YTInterfaceType.class))
-            .setInputs(buildMap(map, YamlSpecKeywords.INPUTS, this::buildPropertyDefinition,
-                YTPropertyDefinition.class, parameter))
-            .setOperations(buildMap(map, YamlSpecKeywords.OPERATIONS, this::buildOperationDefinition,
-                YTOperationDefinition.class, parameter))
-            .setDerivedFrom(buildQName(stringValue(map.get(YamlSpecKeywords.DERIVED_FROM))))
-            .build();
+                new Parameter<YTInterfaceType.Builder>(parameter.getContext())
+                        .setBuilder(new YTInterfaceType.Builder())
+                        .setClazz(YTInterfaceType.class))
+                .setInputs(buildMap(map, YamlSpecKeywords.INPUTS, this::buildPropertyDefinition,
+                        YTPropertyDefinition.class, parameter))
+                .setOperations(buildMap(map, YamlSpecKeywords.OPERATIONS, this::buildOperationDefinition,
+                        YTOperationDefinition.class, parameter))
+                .setDerivedFrom(buildQName(stringValue(map.get(YamlSpecKeywords.DERIVED_FROM))))
+                .build();
     }
 
     private Boolean filterInterfaceTypeOperation(Map.Entry<String, Object> entry) {
@@ -606,7 +609,7 @@ public class YamlBuilder {
             return false;
         }
         Set<String> keys = Stream.of("inputs", "description", "version", "derived_from",
-            "properties", "attributes", "metadata").collect(Collectors.toSet());
+                "properties", "attributes", "metadata").collect(Collectors.toSet());
         return !keys.contains(entry.getKey());
     }
 
@@ -622,20 +625,20 @@ public class YamlBuilder {
         Map<String, Object> map = (Map<String, Object>) object;
         String description = buildDescription(map.get(YamlSpecKeywords.DESCRIPTION));
         Map<String, YTParameterDefinition> inputs = buildParameterDefinitions(map.get(YamlSpecKeywords.INPUTS),
-            new Parameter<>(parameter.getContext()).addContext(YamlSpecKeywords.INPUTS).setValue(parameter.getValue())
+                new Parameter<>(parameter.getContext()).addContext(YamlSpecKeywords.INPUTS).setValue(parameter.getValue())
         );
         Map<String, YTParameterDefinition> outputs = buildParameterDefinitions(map.get(YamlSpecKeywords.OUTPUTS),
-            new Parameter<>(parameter.getContext()).addContext(YamlSpecKeywords.OUTPUTS).setValue(parameter.getValue())
+                new Parameter<>(parameter.getContext()).addContext(YamlSpecKeywords.OUTPUTS).setValue(parameter.getValue())
         );
         YTImplementation implementation = buildImplementation(map.get(YamlSpecKeywords.IMPLEMENTATION),
-            new Parameter<YTImplementation>(parameter.getContext()).addContext(YamlSpecKeywords.IMPLEMENTATION)
+                new Parameter<YTImplementation>(parameter.getContext()).addContext(YamlSpecKeywords.IMPLEMENTATION)
         );
         return new YTOperationDefinition.Builder()
-            .setDescription(description)
-            .setInputs(inputs)
-            .setOutputs(outputs)
-            .setImplementation(implementation)
-            .build();
+                .setDescription(description)
+                .setInputs(inputs)
+                .setOutputs(outputs)
+                .setImplementation(implementation)
+                .build();
     }
 
     @Nullable
@@ -645,15 +648,15 @@ public class YamlBuilder {
         }
         String context = stringValue(parameter.getValue());
         if ("TNodeType".equals(context) ||
-            "TRelationshipType".equals(context) ||
-            "TGroupType".equals(context) ||
-            "TInterfaceType".equals(context)) {
+                "TRelationshipType".equals(context) ||
+                "TGroupType".equals(context) ||
+                "TInterfaceType".equals(context)) {
             return buildMap(object, new Parameter<YTParameterDefinition>(parameter.getContext())
-                .setClazz(YTParameterDefinition.class)
-                .setBuilderOO(this::buildParameterDefinition));
+                    .setClazz(YTParameterDefinition.class)
+                    .setBuilderOO(this::buildParameterDefinition));
         } else {
             return buildMap(object, new Parameter<YTParameterDefinition>(parameter.getContext())
-                .setBuilderOO(this::buildParameterAssignment));
+                    .setBuilderOO(this::buildParameterAssignment));
         }
     }
 
@@ -664,23 +667,23 @@ public class YamlBuilder {
         }
         String context = stringValue(parameter.getValue());
         if ("TNodeType".equals(context) ||
-            "TRelationshipType".equals(context) ||
-            "TGroupType".equals(context) ||
-            "TInterfaceType".equals(context)) {
+                "TRelationshipType".equals(context) ||
+                "TGroupType".equals(context) ||
+                "TInterfaceType".equals(context)) {
             return buildMap(object, new Parameter<YTPropertyAssignmentOrDefinition>(parameter.getContext())
-                .setClazz(YTPropertyDefinition.class)
-                .setBuilderOO(this::buildPropertyDefinition));
+                    .setClazz(YTPropertyDefinition.class)
+                    .setBuilderOO(this::buildPropertyDefinition));
         } else {
             return buildMap(object, new Parameter<YTPropertyAssignmentOrDefinition>(parameter.getContext())
-                .setBuilderOO(this::buildPropertyAssignment));
+                    .setBuilderOO(this::buildPropertyAssignment));
         }
     }
 
     @Nullable
     public <T> YTPropertyAssignment buildPropertyAssignment(Object object, Parameter<T> parameter) {
         return new YTPropertyAssignment.Builder()
-            .setValue(object)
-            .build();
+                .setValue(object)
+                .build();
     }
 
     @Nullable
@@ -697,7 +700,7 @@ public class YamlBuilder {
             YTImplementation.Builder builder = new YTImplementation.Builder();
             builder.setPrimaryArtifactName(stringValue(map.get(YamlSpecKeywords.PRIMARY)));
             builder.setDependencyArtifactNames(buildListString(map.get(YamlSpecKeywords.DEPENDENCIES),
-                new Parameter<List<String>>(parameter.getContext()).addContext(YamlSpecKeywords.DEPENDENCIES)
+                    new Parameter<List<String>>(parameter.getContext()).addContext(YamlSpecKeywords.DEPENDENCIES)
             ));
             builder.setOperationHost(stringValue(map.get(YamlSpecKeywords.OPERATION_HOST)));
             String timeout = stringValue(map.get(YamlSpecKeywords.TIMEOUT));
@@ -715,17 +718,17 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) object;
         return buildEntityType(object, new Parameter<YTRelationshipType.Builder>(parameter.getContext())
-            .setBuilder(new YTRelationshipType.Builder())
-            .setClazz(YTRelationshipType.class))
-            .setValidTargetTypes(buildListQName(buildListString(map.get(YamlSpecKeywords.VALID_TARGET_TYPES),
-                new Parameter<List<String>>(parameter.getContext()).addContext(YamlSpecKeywords.VALID_TARGET_TYPES)
-            )))
-            .setInterfaces(buildMap(map.get(YamlSpecKeywords.INTERFACES),
-                new Parameter<YTInterfaceDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.INTERFACES)
-                    .setValue("TRelationshipType")
-                    .setBuilderOO(this::buildInterfaceDefinition)
-            ))
-            .build();
+                .setBuilder(new YTRelationshipType.Builder())
+                .setClazz(YTRelationshipType.class))
+                .setValidTargetTypes(buildListQName(buildListString(map.get(YamlSpecKeywords.VALID_TARGET_TYPES),
+                        new Parameter<List<String>>(parameter.getContext()).addContext(YamlSpecKeywords.VALID_TARGET_TYPES)
+                )))
+                .setInterfaces(buildMap(map.get(YamlSpecKeywords.INTERFACES),
+                        new Parameter<YTInterfaceDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.INTERFACES)
+                                .setValue("TRelationshipType")
+                                .setBuilderOO(this::buildInterfaceDefinition)
+                ))
+                .build();
     }
 
     @Nullable
@@ -736,17 +739,17 @@ public class YamlBuilder {
         }
         Map<String, Object> map = (Map<String, Object>) object;
         YTInterfaceDefinition.Builder<?> output = new YTInterfaceDefinition.Builder<>()
-            .setType(buildQName(stringValue(map.get(YamlSpecKeywords.TYPE))))
-            .setInputs(buildParameterDefinitions(map.get(YamlSpecKeywords.INPUTS),
-                new Parameter<>(parameter.getContext()).addContext(YamlSpecKeywords.INPUTS)
-                    .setValue(parameter.getValue())
-            ));
+                .setType(buildQName(stringValue(map.get(YamlSpecKeywords.TYPE))))
+                .setInputs(buildParameterDefinitions(map.get(YamlSpecKeywords.INPUTS),
+                        new Parameter<>(parameter.getContext()).addContext(YamlSpecKeywords.INPUTS)
+                                .setValue(parameter.getValue())
+                ));
         Map<String, YTOperationDefinition> operations = buildMap(map.get(YamlSpecKeywords.OPERATIONS),
-            new Parameter<YTOperationDefinition>(parameter.getContext())
-                .setValue(parameter.getValue())
-                .addContext("(operation)")
-                .setBuilderOO(this::buildOperationDefinition)
-                .setFilter(this::filterInterfaceAssignmentOperation)
+                new Parameter<YTOperationDefinition>(parameter.getContext())
+                        .setValue(parameter.getValue())
+                        .addContext("(operation)")
+                        .setBuilderOO(this::buildOperationDefinition)
+                        .setFilter(this::filterInterfaceAssignmentOperation)
         );
         output.setOperations(operations);
         return output.build();
@@ -760,17 +763,17 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) object;
         return buildEntityType(object, new Parameter<YTNodeType.Builder>(parameter.getContext())
-            .setBuilder(new YTNodeType.Builder())
-            .setClazz(YTNodeType.class))
-            .setRequirements(buildList(map, YamlSpecKeywords.REQUIREMENTS, this::buildMapRequirementDefinition, parameter))
-            .setCapabilities(buildMap(map, YamlSpecKeywords.CAPABILITIES, this::buildCapabilityDefinition, parameter))
-            .setInterfaces(buildMap(map.get(YamlSpecKeywords.INTERFACES),
-                new Parameter<YTInterfaceDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.INTERFACES)
-                    .setValue("TNodeType")
-                    .setBuilderOO(this::buildInterfaceDefinition)
-            ))
-            .setArtifacts(buildMap(map, YamlSpecKeywords.ARTIFACTS, this::buildArtifactDefinition, parameter))
-            .build();
+                .setBuilder(new YTNodeType.Builder())
+                .setClazz(YTNodeType.class))
+                .setRequirements(buildList(map, YamlSpecKeywords.REQUIREMENTS, this::buildMapRequirementDefinition, parameter))
+                .setCapabilities(buildMap(map, YamlSpecKeywords.CAPABILITIES, this::buildCapabilityDefinition, parameter))
+                .setInterfaces(buildMap(map.get(YamlSpecKeywords.INTERFACES),
+                        new Parameter<YTInterfaceDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.INTERFACES)
+                                .setValue("TNodeType")
+                                .setBuilderOO(this::buildInterfaceDefinition)
+                ))
+                .setArtifacts(buildMap(map, YamlSpecKeywords.ARTIFACTS, this::buildArtifactDefinition, parameter))
+                .build();
     }
 
     @Nullable
@@ -794,14 +797,14 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) object;
         return new YTRequirementDefinition.Builder(buildQName(stringValue(map.get(YamlSpecKeywords.CAPABILITY))))
-            .setNode(buildQName(stringValue(map.get(YamlSpecKeywords.NODE))))
-            .setRelationship(buildRelationshipDefinition(map.get(YamlSpecKeywords.RELATIONSHIP),
-                new Parameter<YTRelationshipDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.RELATIONSHIP)
-            ))
-            .setOccurrences(buildListString(map.get(YamlSpecKeywords.OCCURRENCES),
-                new Parameter<List<String>>(parameter.getContext()).addContext(YamlSpecKeywords.OCCURRENCES)
-            ))
-            .build();
+                .setNode(buildQName(stringValue(map.get(YamlSpecKeywords.NODE))))
+                .setRelationship(buildRelationshipDefinition(map.get(YamlSpecKeywords.RELATIONSHIP),
+                        new Parameter<YTRelationshipDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.RELATIONSHIP)
+                ))
+                .setOccurrences(buildListString(map.get(YamlSpecKeywords.OCCURRENCES),
+                        new Parameter<List<String>>(parameter.getContext()).addContext(YamlSpecKeywords.OCCURRENCES)
+                ))
+                .build();
     }
 
     @Nullable
@@ -818,12 +821,12 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) object;
         return new YTRelationshipDefinition.Builder(buildQName(stringValue(map.get(YamlSpecKeywords.TYPE))))
-            .setInterfaces(buildMap(map.get(YamlSpecKeywords.INTERFACES),
-                new Parameter<YTInterfaceDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.INTERFACES)
-                    .setValue("TRelationshipDefinition")
-                    .setBuilderOO(this::buildInterfaceDefinition)
-            ))
-            .build();
+                .setInterfaces(buildMap(map.get(YamlSpecKeywords.INTERFACES),
+                        new Parameter<YTInterfaceDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.INTERFACES)
+                                .setValue("TRelationshipDefinition")
+                                .setBuilderOO(this::buildInterfaceDefinition)
+                ))
+                .build();
     }
 
     @Nullable
@@ -840,20 +843,20 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) object;
         return new YTCapabilityDefinition.Builder(buildQName(stringValue(map.get(YamlSpecKeywords.TYPE))))
-            .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
-            .setOccurrences(buildListString(map.get(YamlSpecKeywords.OCCURRENCES),
-                new Parameter<List<String>>(parameter.getContext()).addContext(YamlSpecKeywords.OCCURRENCES)
-            ))
-            .setValidSourceTypes(buildListQName(buildListString(map.get(YamlSpecKeywords.VALID_SOURCE_TYPES),
-                new Parameter<List<String>>(parameter.getContext()).addContext(YamlSpecKeywords.VALID_SOURCE_TYPES)
-            )))
-            .setProperties(buildMap(map.get(YamlSpecKeywords.PROPERTIES),
-                new Parameter<YTPropertyDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.PROPERTIES)
-                    .setClazz(YTPropertyDefinition.class)
-                    .setBuilderOO(this::buildPropertyDefinition)
-            ))
-            .setAttributes(buildMap(map, YamlSpecKeywords.ATTRIBUTES, this::buildAttributeDefinition, parameter))
-            .build();
+                .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
+                .setOccurrences(buildListString(map.get(YamlSpecKeywords.OCCURRENCES),
+                        new Parameter<List<String>>(parameter.getContext()).addContext(YamlSpecKeywords.OCCURRENCES)
+                ))
+                .setValidSourceTypes(buildListQName(buildListString(map.get(YamlSpecKeywords.VALID_SOURCE_TYPES),
+                        new Parameter<List<String>>(parameter.getContext()).addContext(YamlSpecKeywords.VALID_SOURCE_TYPES)
+                )))
+                .setProperties(buildMap(map.get(YamlSpecKeywords.PROPERTIES),
+                        new Parameter<YTPropertyDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.PROPERTIES)
+                                .setClazz(YTPropertyDefinition.class)
+                                .setBuilderOO(this::buildPropertyDefinition)
+                ))
+                .setAttributes(buildMap(map, YamlSpecKeywords.ATTRIBUTES, this::buildAttributeDefinition, parameter))
+                .build();
     }
 
     @Nullable
@@ -884,14 +887,14 @@ public class YamlBuilder {
             assert false;
         }
         return new YTArtifactDefinition.Builder(buildQName(stringValue(map.get(YamlSpecKeywords.TYPE))), file)
-            .setRepository(stringValue(map.get(YamlSpecKeywords.REPOSITORY)))
-            .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
-            .setDeployPath(stringValue(map.get(YamlSpecKeywords.DEPLOY_PATH)))
-            .setProperties(buildMap(map.get(YamlSpecKeywords.PROPERTIES),
-                new Parameter<YTPropertyAssignment>().addContext(YamlSpecKeywords.PROPERTIES)
-                    .setBuilderOO(this::buildPropertyAssignment)
-            ))
-            .build();
+                .setRepository(stringValue(map.get(YamlSpecKeywords.REPOSITORY)))
+                .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
+                .setDeployPath(stringValue(map.get(YamlSpecKeywords.DEPLOY_PATH)))
+                .setProperties(buildMap(map.get(YamlSpecKeywords.PROPERTIES),
+                        new Parameter<YTPropertyAssignment>().addContext(YamlSpecKeywords.PROPERTIES)
+                                .setBuilderOO(this::buildPropertyAssignment)
+                ))
+                .build();
     }
 
     @Nullable
@@ -902,12 +905,12 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) object;
         return buildEntityType(object, new Parameter<YTGroupType.Builder>(parameter.getContext())
-            .setBuilder(new YTGroupType.Builder())
-            .setClazz(YTGroupType.class))
-            .setMembers(buildListQName(buildListString(map.get(YamlSpecKeywords.MEMBERS),
-                new Parameter<List<String>>(parameter.getContext()).addContext(YamlSpecKeywords.MEMBERS)
-            )))
-            .build();
+                .setBuilder(new YTGroupType.Builder())
+                .setClazz(YTGroupType.class))
+                .setMembers(buildListQName(buildListString(map.get(YamlSpecKeywords.MEMBERS),
+                        new Parameter<List<String>>(parameter.getContext()).addContext(YamlSpecKeywords.MEMBERS)
+                )))
+                .build();
     }
 
     @Nullable
@@ -918,14 +921,14 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) object;
         return buildEntityType(object, new Parameter<YTPolicyType.Builder>(parameter.getContext())
-            .setBuilder(new YTPolicyType.Builder())
-            .setClazz(YTPolicyType.class))
-            .setTargets(buildListQName(buildListString(map.get(YamlSpecKeywords.TARGETS),
-                new Parameter<List<String>>(parameter.getContext()).addContext(YamlSpecKeywords.TARGETS)
-            )))
-            .setTriggers(buildMap(map, YamlSpecKeywords.TRIGGERS, this::buildTriggerDefinition,
-                YTTriggerDefinition.class, parameter))
-            .build();
+                .setBuilder(new YTPolicyType.Builder())
+                .setClazz(YTPolicyType.class))
+                .setTargets(buildListQName(buildListString(map.get(YamlSpecKeywords.TARGETS),
+                        new Parameter<List<String>>(parameter.getContext()).addContext(YamlSpecKeywords.TARGETS)
+                )))
+                .setTriggers(buildMap(map, YamlSpecKeywords.TRIGGERS, this::buildTriggerDefinition,
+                        YTTriggerDefinition.class, parameter))
+                .build();
     }
 
     @Nullable
@@ -939,13 +942,13 @@ public class YamlBuilder {
             return null;
         }
         YTTriggerDefinition.Builder output = new YTTriggerDefinition.Builder(stringValue(map.get(YamlSpecKeywords.EVENT)))
-            .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
-            .setTargetFilter(buildEventFilterDefinition(map.get(YamlSpecKeywords.TARGET_FILTER),
-                new Parameter<YTEventFilterDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.TARGET_FILTER)
-            ))
-            .setAction(buildList(map, YamlSpecKeywords.ACTION, this::buildMapActivityDefinition,
-                new Parameter<YTMapActivityDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.ACTION))
-            );
+                .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
+                .setTargetFilter(buildEventFilterDefinition(map.get(YamlSpecKeywords.TARGET_FILTER),
+                        new Parameter<YTEventFilterDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.TARGET_FILTER)
+                ))
+                .setAction(buildList(map, YamlSpecKeywords.ACTION, this::buildMapActivityDefinition,
+                        new Parameter<YTMapActivityDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.ACTION))
+                );
 
         return output.build();
     }
@@ -974,7 +977,7 @@ public class YamlBuilder {
             Map<String, Object> map = (Map<String, Object>) object;
             YTCallOperationActivityDefinition callOperation = new YTCallOperationActivityDefinition(stringValue(map.get(YamlSpecKeywords.OPERATION)));
             Map<String, YTParameterDefinition> inputs = buildParameterDefinitions(map.get(YamlSpecKeywords.INPUTS),
-                new Parameter<>(parameter.getContext()).addContext(YamlSpecKeywords.INPUTS).setValue(parameter.getValue())
+                    new Parameter<>(parameter.getContext()).addContext(YamlSpecKeywords.INPUTS).setValue(parameter.getValue())
             );
             callOperation.setInputs(inputs);
             return callOperation;
@@ -992,8 +995,8 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) object;
         YTEventFilterDefinition.Builder output = new YTEventFilterDefinition.Builder(stringValue(map.get(YamlSpecKeywords.NODE)))
-            .setRequirement(stringValue(map.get(YamlSpecKeywords.REQUIREMENT)))
-            .setCapability(stringValue(map.get(YamlSpecKeywords.CAPABILITY)));
+                .setRequirement(stringValue(map.get(YamlSpecKeywords.REQUIREMENT)))
+                .setCapability(stringValue(map.get(YamlSpecKeywords.CAPABILITY)));
 
         return output.build();
     }
@@ -1010,19 +1013,19 @@ public class YamlBuilder {
             type = "string";
         }
         return new YTParameterDefinition.Builder()
-            .setType(buildQName(type))
-            .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
-            .setRequired(buildRequired(map.get(YamlSpecKeywords.REQUIRED)))
-            .setDefault(map.get(YamlSpecKeywords.DEFAULT))
-            .setStatus(buildStatus(map.get(YamlSpecKeywords.STATUS)))
-            .setConstraints(buildList(map, YamlSpecKeywords.CONSTRAINTS, this::buildConstraintClause, parameter))
-            .setEntrySchema(buildSchemaDefinition(map.get(YamlSpecKeywords.ENTRY_SCHEMA),
-                new Parameter<YTSchemaDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.ENTRY_SCHEMA)
-            ))
-            .setKeySchema(buildSchemaDefinition(map.get(YamlSpecKeywords.KEY_SCHEMA),
-                new Parameter<YTSchemaDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.KEY_SCHEMA)))
-            .setValue(map.get(YamlSpecKeywords.VALUE))
-            .build();
+                .setType(buildQName(type))
+                .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
+                .setRequired(buildRequired(map.get(YamlSpecKeywords.REQUIRED)))
+                .setDefault(map.get(YamlSpecKeywords.DEFAULT))
+                .setStatus(buildStatus(map.get(YamlSpecKeywords.STATUS)))
+                .setConstraints(buildList(map, YamlSpecKeywords.CONSTRAINTS, this::buildConstraintClause, parameter))
+                .setEntrySchema(buildSchemaDefinition(map.get(YamlSpecKeywords.ENTRY_SCHEMA),
+                        new Parameter<YTSchemaDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.ENTRY_SCHEMA)
+                ))
+                .setKeySchema(buildSchemaDefinition(map.get(YamlSpecKeywords.KEY_SCHEMA),
+                        new Parameter<YTSchemaDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.KEY_SCHEMA)))
+                .setValue(map.get(YamlSpecKeywords.VALUE))
+                .build();
     }
 
     @Nullable
@@ -1030,9 +1033,10 @@ public class YamlBuilder {
         if (Objects.isNull(object)) {
             return null;
         }
+
         return new YTParameterDefinition.Builder()
-            .setValue(object)
-            .build();
+                .setValue(object)
+                .build();
     }
 
     @Nullable
@@ -1047,26 +1051,26 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) object;
         return new YTNodeTemplate.Builder(buildQName(stringValue(map.get(YamlSpecKeywords.TYPE))))
-            .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
-            .setMetadata(buildMetadata(map.get(YamlSpecKeywords.METADATA)))
-            .setDirectives(buildListString(map.get(YamlSpecKeywords.DIRECTIVES),
-                new Parameter<List<String>>(parameter.getContext()).addContext(YamlSpecKeywords.DIRECTIVES)
-            ))
-            .setProperties(buildMap(map, YamlSpecKeywords.PROPERTIES, this::buildPropertyAssignment, parameter))
-            .setAttributes(buildMap(map, YamlSpecKeywords.ATTRIBUTES, this::buildAttributeAssignment, parameter))
-            .setRequirements(buildList(map, YamlSpecKeywords.REQUIREMENTS, this::buildMapRequirementAssignment, parameter))
-            .setCapabilities(buildMap(map, YamlSpecKeywords.CAPABILITIES, this::buildCapabilityAssignment, parameter))
-            .setInterfaces(buildMap(map.get(YamlSpecKeywords.INTERFACES),
-                new Parameter<YTInterfaceAssignment>(parameter.getContext()).addContext(YamlSpecKeywords.INTERFACES)
-                    .setValue("TNodeTemplate")
-                    .setBuilderOO(this::buildInterfaceAssignment)
-            ))
-            .setArtifacts(buildMap(map, YamlSpecKeywords.ARTIFACTS, this::buildArtifactDefinition, parameter))
-            .setNodeFilter(buildNodeFilterDefinition(map.get(YamlSpecKeywords.NODE_FILTER),
-                new Parameter<YTNodeFilterDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.NODE_FILTER)
-            ))
-            .setCopy(buildQName(stringValue(map.get(YamlSpecKeywords.COPY))))
-            .build();
+                .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
+                .setMetadata(buildMetadata(map.get(YamlSpecKeywords.METADATA)))
+                .setDirectives(buildListString(map.get(YamlSpecKeywords.DIRECTIVES),
+                        new Parameter<List<String>>(parameter.getContext()).addContext(YamlSpecKeywords.DIRECTIVES)
+                ))
+                .setProperties(buildMap(map, YamlSpecKeywords.PROPERTIES, this::buildPropertyAssignment, parameter))
+                .setAttributes(buildMap(map, YamlSpecKeywords.ATTRIBUTES, this::buildAttributeAssignment, parameter))
+                .setRequirements(buildList(map, YamlSpecKeywords.REQUIREMENTS, this::buildMapRequirementAssignment, parameter))
+                .setCapabilities(buildMap(map, YamlSpecKeywords.CAPABILITIES, this::buildCapabilityAssignment, parameter))
+                .setInterfaces(buildMap(map.get(YamlSpecKeywords.INTERFACES),
+                        new Parameter<YTInterfaceAssignment>(parameter.getContext()).addContext(YamlSpecKeywords.INTERFACES)
+                                .setValue("TNodeTemplate")
+                                .setBuilderOO(this::buildInterfaceAssignment)
+                ))
+                .setArtifacts(buildMap(map, YamlSpecKeywords.ARTIFACTS, this::buildArtifactDefinition, parameter))
+                .setNodeFilter(buildNodeFilterDefinition(map.get(YamlSpecKeywords.NODE_FILTER),
+                        new Parameter<YTNodeFilterDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.NODE_FILTER)
+                ))
+                .setCopy(buildQName(stringValue(map.get(YamlSpecKeywords.COPY))))
+                .build();
     }
 
     @Nullable
@@ -1085,9 +1089,9 @@ public class YamlBuilder {
             @SuppressWarnings("unchecked")
             Map<String, Object> map = (Map<String, Object>) object;
             return new YTAttributeAssignment.Builder()
-                .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
-                .setValue(map.get(YamlSpecKeywords.VALUE))
-                .build();
+                    .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
+                    .setValue(map.get(YamlSpecKeywords.VALUE))
+                    .build();
         } else {
             return null;
         }
@@ -1100,7 +1104,7 @@ public class YamlBuilder {
         }
         YTMapRequirementAssignment result = new YTMapRequirementAssignment();
         put(result, stringValue(parameter.getValue()), buildRequirementAssignment(object,
-            new Parameter<>(parameter.getContext())
+                new Parameter<>(parameter.getContext())
         ));
         return result;
     }
@@ -1119,18 +1123,18 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) object;
         return new YTRequirementAssignment.Builder()
-            .setCapability(buildQName(stringValue(map.get(YamlSpecKeywords.CAPABILITY))))
-            .setNode(buildQName(stringValue(map.get(YamlSpecKeywords.NODE))))
-            .setRelationship(buildRelationshipAssignment(map.get(YamlSpecKeywords.RELATIONSHIP),
-                new Parameter<YTRelationshipAssignment>(parameter.getContext()).addContext(YamlSpecKeywords.RELATIONSHIP)
-            ))
-            .setNodeFilter(buildNodeFilterDefinition(map.get(YamlSpecKeywords.NODE_FILTER),
-                new Parameter<YTNodeFilterDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.NODE_FILTER)
-            ))
-            .setOccurrences(buildListString(map.get(YamlSpecKeywords.OCCURRENCES),
-                new Parameter<List<String>>(parameter.getContext()).addContext(YamlSpecKeywords.OCCURRENCES)
-            ))
-            .build();
+                .setCapability(buildQName(stringValue(map.get(YamlSpecKeywords.CAPABILITY))))
+                .setNode(buildQName(stringValue(map.get(YamlSpecKeywords.NODE))))
+                .setRelationship(buildRelationshipAssignment(map.get(YamlSpecKeywords.RELATIONSHIP),
+                        new Parameter<YTRelationshipAssignment>(parameter.getContext()).addContext(YamlSpecKeywords.RELATIONSHIP)
+                ))
+                .setNodeFilter(buildNodeFilterDefinition(map.get(YamlSpecKeywords.NODE_FILTER),
+                        new Parameter<YTNodeFilterDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.NODE_FILTER)
+                ))
+                .setOccurrences(buildListString(map.get(YamlSpecKeywords.OCCURRENCES),
+                        new Parameter<List<String>>(parameter.getContext()).addContext(YamlSpecKeywords.OCCURRENCES)
+                ))
+                .build();
     }
 
     @Nullable
@@ -1147,9 +1151,9 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) object;
         return new YTRelationshipAssignment.Builder(buildQName(stringValue(map.get(YamlSpecKeywords.TYPE))))
-            .setProperties(buildMap(map, YamlSpecKeywords.PROPERTIES, this::buildPropertyAssignment, parameter))
-            .setInterfaces(buildMap(map, YamlSpecKeywords.INTERFACES, this::buildInterfaceAssignment, parameter))
-            .build();
+                .setProperties(buildMap(map, YamlSpecKeywords.PROPERTIES, this::buildPropertyAssignment, parameter))
+                .setInterfaces(buildMap(map, YamlSpecKeywords.INTERFACES, this::buildInterfaceAssignment, parameter))
+                .build();
     }
 
     @Nullable
@@ -1160,18 +1164,18 @@ public class YamlBuilder {
         }
         Map<String, Object> map = (Map<String, Object>) object;
         return new YTInterfaceAssignment.Builder()
-            .setType(buildQName(stringValue(map.get(YamlSpecKeywords.TYPE))))
-            .setInputs(buildParameterDefinitions(map.get(YamlSpecKeywords.INPUTS),
-                new Parameter<>(parameter.getContext())
-                    .setValue("TInterfaceAssignment")
-            ))
-            .setOperations(buildMap(map.get(YamlSpecKeywords.OPERATIONS),
-                new Parameter<YTOperationDefinition>(parameter.getContext()).addContext("(operations)")
-                    .setBuilderOO(this::buildOperationDefinition)
-                    // .setFilter(this::filterInterfaceAssignmentOperation)
-                    .setValue("TInterfaceAssignment")
-            ))
-            .build();
+                .setType(buildQName(stringValue(map.get(YamlSpecKeywords.TYPE))))
+                .setInputs(buildParameterDefinitions(map.get(YamlSpecKeywords.INPUTS),
+                        new Parameter<>(parameter.getContext())
+                                .setValue("TInterfaceAssignment")
+                ))
+                .setOperations(buildMap(map.get(YamlSpecKeywords.OPERATIONS),
+                        new Parameter<YTOperationDefinition>(parameter.getContext()).addContext("(operations)")
+                                .setBuilderOO(this::buildOperationDefinition)
+                                // .setFilter(this::filterInterfaceAssignmentOperation)
+                                .setValue("TInterfaceAssignment")
+                ))
+                .build();
     }
 
     private Boolean filterInterfaceAssignmentOperation(Map.Entry<String, Object> entry) {
@@ -1190,9 +1194,9 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) object;
         return new YTNodeFilterDefinition.Builder()
-            .setProperties(buildList(map, YamlSpecKeywords.PROPERTIES, this::buildMapPropertyDefinition, parameter))
-            .setCapabilities(buildList(map, YamlSpecKeywords.CAPABILITIES, this::buildMapObjectValue, parameter))
-            .build();
+                .setProperties(buildList(map, YamlSpecKeywords.PROPERTIES, this::buildMapPropertyDefinition, parameter))
+                .setCapabilities(buildList(map, YamlSpecKeywords.CAPABILITIES, this::buildMapObjectValue, parameter))
+                .build();
     }
 
     @Nullable
@@ -1202,7 +1206,7 @@ public class YamlBuilder {
         }
         YTMapPropertyFilterDefinition result = new YTMapPropertyFilterDefinition();
         put(result, stringValue(parameter.getValue()), buildPropertyFilterDefinition(object,
-            new Parameter<>(parameter.getContext())));
+                new Parameter<>(parameter.getContext())));
         return result;
     }
 
@@ -1214,8 +1218,8 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) object;
         return new YTPropertyFilterDefinition.Builder()
-            .setConstraints(buildList(map, YamlSpecKeywords.CONSTRAINTS, this::buildConstraintClause, parameter))
-            .build();
+                .setConstraints(buildList(map, YamlSpecKeywords.CONSTRAINTS, this::buildConstraintClause, parameter))
+                .build();
     }
 
     @Nullable
@@ -1236,9 +1240,9 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) object;
         return new YTCapabilityAssignment.Builder()
-            .setProperties(buildMap(map, YamlSpecKeywords.PROPERTIES, this::buildPropertyAssignment, parameter))
-            .setAttributes(buildMap(map, YamlSpecKeywords.ATTRIBUTES, this::buildAttributeAssignment, parameter))
-            .build();
+                .setProperties(buildMap(map, YamlSpecKeywords.PROPERTIES, this::buildPropertyAssignment, parameter))
+                .setAttributes(buildMap(map, YamlSpecKeywords.ATTRIBUTES, this::buildAttributeAssignment, parameter))
+                .build();
     }
 
     @Nullable
@@ -1252,17 +1256,17 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) object;
         return new YTRelationshipTemplate.Builder(buildQName(stringValue(map.get(YamlSpecKeywords.TYPE))))
-            .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
-            .setMetadata(buildMetadata(map.get(YamlSpecKeywords.METADATA)))
-            .setProperties(buildMap(map, YamlSpecKeywords.PROPERTIES, this::buildPropertyAssignment, parameter))
-            .setAttributes(buildMap(map, YamlSpecKeywords.ATTRIBUTES, this::buildAttributeAssignment, parameter))
-            .setInterfaces(buildMap(map.get(YamlSpecKeywords.INTERFACES),
-                new Parameter<YTInterfaceDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.INTERFACES)
-                    .setValue("TRelationshipTemplate")
-                    .setBuilderOO(this::buildInterfaceDefinition)
-            ))
-            .setCopy(buildQName(stringValue(map.get(YamlSpecKeywords.COPY))))
-            .build();
+                .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
+                .setMetadata(buildMetadata(map.get(YamlSpecKeywords.METADATA)))
+                .setProperties(buildMap(map, YamlSpecKeywords.PROPERTIES, this::buildPropertyAssignment, parameter))
+                .setAttributes(buildMap(map, YamlSpecKeywords.ATTRIBUTES, this::buildAttributeAssignment, parameter))
+                .setInterfaces(buildMap(map.get(YamlSpecKeywords.INTERFACES),
+                        new Parameter<YTInterfaceDefinition>(parameter.getContext()).addContext(YamlSpecKeywords.INTERFACES)
+                                .setValue("TRelationshipTemplate")
+                                .setBuilderOO(this::buildInterfaceDefinition)
+                ))
+                .setCopy(buildQName(stringValue(map.get(YamlSpecKeywords.COPY))))
+                .build();
     }
 
     @Nullable
@@ -1276,13 +1280,13 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) object;
         return new YTGroupDefinition.Builder(buildQName(stringValue(map.get(YamlSpecKeywords.TYPE))))
-            .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
-            .setMetadata(buildMetadata(map.get(YamlSpecKeywords.METADATA)))
-            .setProperties(buildMap(map, YamlSpecKeywords.PROPERTIES, this::buildPropertyAssignment, parameter))
-            .setMembers(buildListQName(buildListString(map.get(YamlSpecKeywords.MEMBERS),
-                new Parameter<List<String>>(parameter.getContext()).addContext(YamlSpecKeywords.MEMBERS)
-            )))
-            .build();
+                .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
+                .setMetadata(buildMetadata(map.get(YamlSpecKeywords.METADATA)))
+                .setProperties(buildMap(map, YamlSpecKeywords.PROPERTIES, this::buildPropertyAssignment, parameter))
+                .setMembers(buildListQName(buildListString(map.get(YamlSpecKeywords.MEMBERS),
+                        new Parameter<List<String>>(parameter.getContext()).addContext(YamlSpecKeywords.MEMBERS)
+                )))
+                .build();
     }
 
     @Nullable
@@ -1303,13 +1307,35 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) object;
         return new YTPolicyDefinition.Builder(buildQName(stringValue(map.get(YamlSpecKeywords.TYPE))))
-            .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
-            .setMetadata(buildMetadata(map.get(YamlSpecKeywords.METADATA)))
-            .setProperties(buildMap(map, YamlSpecKeywords.PROPERTIES, this::buildPropertyAssignment, parameter))
-            .setTargets(buildListQName(buildListString(map.get(YamlSpecKeywords.TARGETS),
-                new Parameter<List<String>>(parameter.getContext()).addContext(YamlSpecKeywords.TARGETS)
-            )))
-            .build();
+                .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
+                .setMetadata(buildMetadata(map.get(YamlSpecKeywords.METADATA)))
+                .setProperties(buildMap(map, YamlSpecKeywords.PROPERTIES, this::buildPropertyAssignment, parameter))
+                .setTargets(buildListQName(buildListString(map.get(YamlSpecKeywords.TARGETS),
+                        new Parameter<List<String>>(parameter.getContext()).addContext(YamlSpecKeywords.TARGETS)
+                )))
+                .build();
+    }
+
+    @Nullable
+    public YTWorkflow buildWorkflowDefinition(Object object, Parameter<YTWorkflow> parameter) {
+        if (Objects.isNull(object)) {
+            return null;
+        }
+        if (!validate(YTWorkflow.class, object, parameter)) {
+            return null;
+        }
+        @SuppressWarnings("unchecked")
+        Map<String, Object> map = (Map<String, Object>) object;
+        return new YTWorkflow.Builder()
+                .setDescription(buildDescription(map.get(YamlSpecKeywords.DESCRIPTION)))
+                .setInputs(buildMap(map, YamlSpecKeywords.INPUTS, this::buildPropertyAssignment, parameter))
+                .setOutputs(buildParameterDefinitions(map.get(YamlSpecKeywords.OUTPUTS),
+                        new Parameter<>(parameter.getContext()).addContext(YamlSpecKeywords.OUTPUTS).setValue(parameter.getValue())
+                ))
+                .setImplementation(buildImplementation(map.get(YamlSpecKeywords.IMPLEMENTATION),
+                        new Parameter<YTImplementation>(parameter.getContext()).addContext(YamlSpecKeywords.IMPLEMENTATION)
+                ))
+                .build();
     }
 
     @Nullable
@@ -1320,10 +1346,10 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) object;
         return new YTSubstitutionMappings.Builder()
-            .setNodeType(buildQName(stringValue(map.get(YamlSpecKeywords.NODE_TYPE))))
-            .setCapabilities(buildMap(map, YamlSpecKeywords.CAPABILITIES, this::buildStringList, parameter))
-            .setRequirements(buildMap(map, YamlSpecKeywords.REQUIREMENTS, this::buildStringList, parameter))
-            .build();
+                .setNodeType(buildQName(stringValue(map.get(YamlSpecKeywords.NODE_TYPE))))
+                .setCapabilities(buildMap(map, YamlSpecKeywords.CAPABILITIES, this::buildStringList, parameter))
+                .setRequirements(buildMap(map, YamlSpecKeywords.REQUIREMENTS, this::buildStringList, parameter))
+                .build();
     }
 
     @Nullable
@@ -1370,8 +1396,8 @@ public class YamlBuilder {
     private <T, K> Map<String, T> buildListMap(Map<String, Object> map, String key,
                                                BiFunction<Object, Parameter<T>, T> function, Parameter<K> parameter) {
         return buildListMap(map.get(key),
-            new Parameter<T>(parameter.getContext()).addContext(key)
-                .setBuilderOO(function)
+                new Parameter<T>(parameter.getContext()).addContext(key)
+                        .setBuilderOO(function)
         );
     }
 
@@ -1385,22 +1411,22 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> list = (List<Map<String, Object>>) object;
         return list.stream()
-            .filter(Objects::nonNull)
-            .flatMap(map -> map.entrySet().stream())
-            .filter(Objects::nonNull)
-            .map(entry -> Tuples.pair(entry.getKey(), parameter.getBuilderOO().apply(entry.getValue(),
-                new Parameter<T>(parameter.getContext())
-                    .setClazz(parameter.getClazz())
-                    .setValue(entry.getKey())))
-            )
-            .collect(Collectors.toMap(Pair::getOne, Pair::getTwo));
+                .filter(Objects::nonNull)
+                .flatMap(map -> map.entrySet().stream())
+                .filter(Objects::nonNull)
+                .map(entry -> Tuples.pair(entry.getKey(), parameter.getBuilderOO().apply(entry.getValue(),
+                        new Parameter<T>(parameter.getContext())
+                                .setClazz(parameter.getClazz())
+                                .setValue(entry.getKey())))
+                )
+                .collect(Collectors.toMap(Pair::getOne, Pair::getTwo));
     }
 
     private <T, K> Map<String, T> buildMap(Map<String, Object> map, String key,
                                            BiFunction<Object, Parameter<T>, T> function, Parameter<K> parameter) {
         return buildMap(map.get(key),
-            new Parameter<T>(parameter.getContext()).addContext(key)
-                .setBuilderOO(function)
+                new Parameter<T>(parameter.getContext()).addContext(key)
+                        .setBuilderOO(function)
         );
     }
 
@@ -1408,9 +1434,9 @@ public class YamlBuilder {
                                            BiFunction<Object, Parameter<T>, T> function,
                                            Class<?> clazz, Parameter<K> parameter) {
         return buildMap(map.get(key),
-            new Parameter<T>(parameter.getContext()).addContext(key)
-                .setClazz(clazz)
-                .setBuilderOO(function)
+                new Parameter<T>(parameter.getContext()).addContext(key)
+                        .setClazz(clazz)
+                        .setBuilderOO(function)
         );
     }
 
@@ -1420,17 +1446,17 @@ public class YamlBuilder {
         }
         //if (Objects.isNull(parameter.getFilter())) parameter.setFilter(this::nonNull);
         Map<String, T> output = buildStream(object, parameter)
-            .map(entry -> {
-                return Tuples.pair(entry.getKey(), parameter.getBuilderOO().apply(
-                        entry.getValue(),
-                        new Parameter<T>(parameter.getContext()).addContext(entry.getKey())
-                            .setClazz(parameter.getClazz())
-                            .setValue(parameter.getValue())
-                    )
-                );
-            })
-            .filter(this::nonNull)
-            .collect(Collectors.toMap(Pair::getOne, Pair::getTwo));
+                .map(entry -> {
+                    return Tuples.pair(entry.getKey(), parameter.getBuilderOO().apply(
+                                    entry.getValue(),
+                                    new Parameter<T>(parameter.getContext()).addContext(entry.getKey())
+                                            .setClazz(parameter.getClazz())
+                                            .setValue(parameter.getValue())
+                            )
+                    );
+                })
+                .filter(this::nonNull)
+                .collect(Collectors.toMap(Pair::getOne, Pair::getTwo));
         return output;
     }
 
@@ -1438,13 +1464,13 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) object;
         return map.entrySet().stream()
-            .filter(Optional.ofNullable(parameter.getFilter()).orElse(entry -> true));
+                .filter(Optional.ofNullable(parameter.getFilter()).orElse(entry -> true));
     }
 
     private <T> List<T> buildList(Map<String, Object> map, String key, BiFunction<Object, Parameter<T>, T> function, Parameter<?> parameter) {
         return buildList(map.get(key),
-            new Parameter<T>(parameter.getContext()).addContext(key)
-                .setBuilderOO(function)
+                new Parameter<T>(parameter.getContext()).addContext(key)
+                        .setBuilderOO(function)
         );
     }
 
@@ -1455,15 +1481,15 @@ public class YamlBuilder {
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> list = (List<Map<String, Object>>) object;
         return list.stream()
-            .filter(Objects::nonNull)
-            .flatMap(map -> map.entrySet().stream())
-            .filter(Objects::nonNull)
-            .map(entry -> parameter.getBuilderOO().apply(entry.getValue(),
-                new Parameter<T>(parameter.getContext())
-                    .setValue(entry.getKey())
-            ))
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
+                .filter(Objects::nonNull)
+                .flatMap(map -> map.entrySet().stream())
+                .filter(Objects::nonNull)
+                .map(entry -> parameter.getBuilderOO().apply(entry.getValue(),
+                        new Parameter<T>(parameter.getContext())
+                                .setValue(entry.getKey())
+                ))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
     public static class Parameter<T> {

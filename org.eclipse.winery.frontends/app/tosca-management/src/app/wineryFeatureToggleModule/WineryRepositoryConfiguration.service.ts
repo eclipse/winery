@@ -39,6 +39,7 @@ export interface WineryConfiguration {
         liveModeling: boolean;
         propertyCheck: boolean;
         yaml: boolean;
+        exportNormativeTypes: boolean;
         patternDetection: boolean;
         normalization: boolean;
         licenseEngine: boolean;

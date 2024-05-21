@@ -171,6 +171,10 @@ public class YamlCsarImporter extends CsarImporter {
                 this.adjustNodeType(definitionsPath.getParent().getParent(), (TNodeType) ci, (NodeTypeId) wid, tmf, errors);
             } else if (ci instanceof TRelationshipType) {
                 this.adjustRelationshipType(definitionsPath.getParent().getParent(), (TRelationshipType) ci, (RelationshipTypeId) wid, tmf, errors);
+            } else if (ci instanceof TServiceTemplate) {
+                // tosca yaml doesn't have plans but workflows, therefore this seems not to be working properly
+               // this.adjustServiceTemplate(definitionsPath.getParent().getParent(), tmf, (ServiceTemplateId) wid, (TServiceTemplate) ci, errors);
+                entryServiceTemplate = Optional.of((ServiceTemplateId) wid);
             }
 
             storeDefs(wid, newDefs);

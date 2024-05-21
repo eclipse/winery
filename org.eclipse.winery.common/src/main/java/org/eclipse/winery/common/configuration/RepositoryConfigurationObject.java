@@ -36,6 +36,7 @@ public class RepositoryConfigurationObject extends AbstractConfigurationObject {
     private GitConfigurationObject gitConfiguration;
 
     private RepositoryProvider provider;
+    private boolean exportNormativeTypes;
     private String repositoryRoot;
     private String csarOutputPath;
     private boolean tenantRepository;
@@ -57,6 +58,7 @@ public class RepositoryConfigurationObject extends AbstractConfigurationObject {
         configuration.setProperty(key + "repositoryRoot", this.repositoryRoot);
         configuration.setProperty(key + "csarOutputPath", this.csarOutputPath);
         configuration.setProperty(key + "tenantMode", this.tenantRepository);
+        configuration.setProperty(key + "exportNormativeTypes", this.exportNormativeTypes);
         this.getGitConfiguration().save();
         Environment.getInstance().save();
     }
@@ -68,6 +70,9 @@ public class RepositoryConfigurationObject extends AbstractConfigurationObject {
         this.csarOutputPath = configuration.getString(key + "csarOutputPath");
         if (this.configuration.containsKey(key + "tenantMode")) {
             this.tenantRepository = configuration.getBoolean(key + "tenantMode");
+        }
+        if (this.configuration.containsKey(key + "exportNormativeTypes")) {
+            this.exportNormativeTypes = configuration.getBoolean(key + "exportNormativeTypes");
         }
         String provider = Environment.getInstance().getConfiguration().getString(getProviderConfigurationKey());
         if (provider.equalsIgnoreCase(RepositoryProvider.YAML.name())) {
@@ -88,6 +93,15 @@ public class RepositoryConfigurationObject extends AbstractConfigurationObject {
 
     public void setProvider(RepositoryProvider provider) {
         this.provider = provider;
+    }
+
+    public boolean hasExportNormativeTypes() {
+        return this.exportNormativeTypes;
+    }
+    
+    public void setExportNormativeTypes(boolean exportNormativeTypes) {
+        this.exportNormativeTypes = exportNormativeTypes;
+        this.save();
     }
 
     /**

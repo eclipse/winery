@@ -13,22 +13,9 @@
  *******************************************************************************/
 package org.eclipse.winery.repository.yaml.converter;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.xml.namespace.QName;
+import org.apache.commons.lang3.StringUtils;
+import org.eclipse.jdt.annotation.NonNull;
+import org.eclipse.jdt.annotation.Nullable;
 
 import org.eclipse.winery.model.converter.support.Defaults;
 import org.eclipse.winery.model.converter.support.Namespaces;
@@ -77,6 +64,7 @@ import org.eclipse.winery.model.tosca.TServiceTemplate;
 import org.eclipse.winery.model.tosca.TTag;
 import org.eclipse.winery.model.tosca.TTopologyTemplate;
 import org.eclipse.winery.model.tosca.TTriggerDefinition;
+import org.eclipse.winery.model.tosca.TWorkflow;
 import org.eclipse.winery.model.tosca.extensions.kvproperties.AttributeDefinition;
 import org.eclipse.winery.model.tosca.extensions.kvproperties.ConstraintClauseKV;
 import org.eclipse.winery.model.tosca.extensions.kvproperties.ParameterDefinition;
@@ -114,6 +102,7 @@ import org.eclipse.winery.model.tosca.yaml.YTSchemaDefinition;
 import org.eclipse.winery.model.tosca.yaml.YTServiceTemplate;
 import org.eclipse.winery.model.tosca.yaml.YTTopologyTemplateDefinition;
 import org.eclipse.winery.model.tosca.yaml.YTTriggerDefinition;
+import org.eclipse.winery.model.tosca.yaml.YTWorkflow;
 import org.eclipse.winery.model.tosca.yaml.support.Metadata;
 import org.eclipse.winery.model.tosca.yaml.support.ValueHelper;
 import org.eclipse.winery.model.tosca.yaml.support.YTMapActivityDefinition;
@@ -124,11 +113,25 @@ import org.eclipse.winery.repository.yaml.converter.support.InheritanceUtils;
 import org.eclipse.winery.repository.yaml.converter.support.TypeConverter;
 import org.eclipse.winery.repository.yaml.converter.support.extension.YTImplementationArtifactDefinition;
 
-import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jdt.annotation.NonNull;
-import org.eclipse.jdt.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.xml.namespace.QName;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ToCanonical {
 
@@ -195,24 +198,24 @@ public class ToCanonical {
 
         TDefinitions.Builder builder = new TDefinitions.Builder(id + "_Definitions", target_namespace);
         builder.setImport(convert(node.getImports()))
-            .addTypes(convert(node.getGroupTypes()));
+                .addTypes(convert(node.getGroupTypes()));
         if (isServiceTemplate) {
             builder.addServiceTemplates(convertServiceTemplate(node, id, target_namespace));
         }
         builder.addNodeTypes(convert(node.getNodeTypes()))
-            .addDataTypes(convert(node.getDataTypes()))
-            .addNodeTypeImplementations(this.nodeTypeImplementations)
-            .addRelationshipTypes(convert(node.getRelationshipTypes()))
-            .addRelationshipTypeImplementations(this.relationshipTypeImplementations)
-            .addCapabilityTypes(convert(node.getCapabilityTypes()))
-            .addArtifactTypes(convert(node.getArtifactTypes()))
-            .addArtifactTemplates(new ArrayList<>(this.artifactTemplates.values()))
-            .addPolicyTypes(convert(node.getPolicyTypes()))
-            .addInterfaceTypes(convert(node.getInterfaceTypes()))
-            .setName(id)
-            .addImports(this.imports)
-            .addRequirementTypes(this.requirementTypes)
-            .addGroupTypes(convert(node.getGroupTypes()));
+                .addDataTypes(convert(node.getDataTypes()))
+                .addNodeTypeImplementations(this.nodeTypeImplementations)
+                .addRelationshipTypes(convert(node.getRelationshipTypes()))
+                .addRelationshipTypeImplementations(this.relationshipTypeImplementations)
+                .addCapabilityTypes(convert(node.getCapabilityTypes()))
+                .addArtifactTypes(convert(node.getArtifactTypes()))
+                .addArtifactTemplates(new ArrayList<>(this.artifactTemplates.values()))
+                .addPolicyTypes(convert(node.getPolicyTypes()))
+                .addInterfaceTypes(convert(node.getInterfaceTypes()))
+                .setName(id)
+                .addImports(this.imports)
+                .addRequirementTypes(this.requirementTypes)
+                .addGroupTypes(convert(node.getGroupTypes()));
         // WriterUtils.storeDefinitions(definitions, true, path);
         return builder.build();
     }
@@ -230,14 +233,14 @@ public class ToCanonical {
         }
 
         TServiceTemplate result = new TServiceTemplate.Builder(id, convert(node.getTopologyTemplate()))
-            .addDocumentation(node.getDescription())
-            .setBoundaryDefinitions(
-                new TBoundaryDefinitions.Builder()
-                    .addPolicies(this.policies.get("boundary")).build()
-            )
-            .setName(id)
-            .setTargetNamespace(targetNamespace)
-            .build();
+                .addDocumentation(node.getDescription())
+                .setBoundaryDefinitions(
+                        new TBoundaryDefinitions.Builder()
+                                .addPolicies(this.policies.get("boundary")).build()
+                )
+                .setName(id)
+                .setTargetNamespace(targetNamespace)
+                .build();
         if (node.getTopologyTemplate() != null) {
             enhanceTopology(result.getTopologyTemplate(), node.getTopologyTemplate().getNodeTemplates());
         }
@@ -255,19 +258,19 @@ public class ToCanonical {
      */
     private <T extends TEntityType.Builder<T>> T fillEntityTypeProperties(YTEntityType node, T builder) {
         builder.addDocumentation(node.getDescription())
-            .setDerivedFrom(node.getDerivedFrom())
-            .addTags(convertMetadata(node.getMetadata(), "targetNamespace", "abstract", "final"))
-            .setTargetNamespace(node.getMetadata().get("targetNamespace"))
-            .setAbstract(Boolean.parseBoolean(node.getMetadata().get("abstract")))
-            .setFinal(Boolean.parseBoolean(node.getMetadata().get("final")))
-            .setAttributeDefinitions(convert(node.getAttributes()));
+                .setDerivedFrom(node.getDerivedFrom())
+                .addTags(convertMetadata(node.getMetadata(), "targetNamespace", "abstract", "final"))
+                .setTargetNamespace(node.getMetadata().get("targetNamespace"))
+                .setAbstract(Boolean.parseBoolean(node.getMetadata().get("abstract")))
+                .setFinal(Boolean.parseBoolean(node.getMetadata().get("final")))
+                .setAttributeDefinitions(convert(node.getAttributes()));
 
         if (node.getVersion() != null) {
             String version = node.getVersion().getVersion();
             if (version != null) {
                 builder.addTag(
-                    new TTag.Builder("version", version)
-                        .build()
+                        new TTag.Builder("version", version)
+                                .build()
                 );
             }
         }
@@ -307,13 +310,13 @@ public class ToCanonical {
     private List<TTag> convertMetadata(Metadata metadata, String... excludedKeys) {
         Set<String> exclusionSet = new HashSet<>(Arrays.asList(excludedKeys));
         return metadata.entrySet().stream()
-            .filter(Objects::nonNull)
-            .filter(e -> !exclusionSet.contains(e.getKey()))
-            .map(entry ->
-                new TTag.Builder(entry.getKey(), entry.getValue())
-                    .build())
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
+                .filter(Objects::nonNull)
+                .filter(e -> !exclusionSet.contains(e.getKey()))
+                .map(entry ->
+                        new TTag.Builder(entry.getKey(), entry.getValue())
+                                .build())
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -365,9 +368,9 @@ public class ToCanonical {
     @NonNull
     private TArtifact convertToTArtifact(YTArtifactDefinition node, String id) {
         TArtifact.Builder builder = new TArtifact.Builder(id, node.getType())
-            .setDescription(node.getDescription())
-            .setDeployPath(node.getDeployPath())
-            .setFile(node.getFile());
+                .setDescription(node.getDescription())
+                .setDeployPath(node.getDeployPath())
+                .setFile(node.getFile());
 
         if (node.getProperties() != null) {
             builder.setProperties(convertPropertyAssignments(node.getProperties()));
@@ -388,9 +391,9 @@ public class ToCanonical {
         String typeName = fixNamespaceDuplication(type, node.getMetadata().get("targetNamespace"));
 
         TInterfaceType.Builder interfaceBuilder = new TInterfaceType.Builder(typeName)
-            .setDerivedFrom(node.getDerivedFrom())
-            .setDescription(node.getDescription())
-            .setOperations(ops);
+                .setDerivedFrom(node.getDerivedFrom())
+                .setDescription(node.getDescription())
+                .setOperations(ops);
         node.getMetadata();
 
         if (Objects.nonNull(node.getMetadata().get("targetNamespace"))) {
@@ -411,15 +414,15 @@ public class ToCanonical {
             return null;
         }
         return artifactDefinitionMap.entrySet().stream()
-            .filter(Objects::nonNull)
-            .map(entry -> {
-                TArtifactTemplate artifactTemplate = convert(entry.getValue(), entry.getKey());
-                this.artifactTemplates.put(artifactTemplate.getId(), artifactTemplate);
-                return new TDeploymentArtifact.Builder(entry.getKey(), entry.getValue().getType())
-                    .setArtifactRef(new QName(targetNamespace, artifactTemplate.getId()))
-                    .build();
-            })
-            .collect(Collectors.toList());
+                .filter(Objects::nonNull)
+                .map(entry -> {
+                    TArtifactTemplate artifactTemplate = convert(entry.getValue(), entry.getKey());
+                    this.artifactTemplates.put(artifactTemplate.getId(), artifactTemplate);
+                    return new TDeploymentArtifact.Builder(entry.getKey(), entry.getValue().getType())
+                            .setArtifactRef(new QName(targetNamespace, artifactTemplate.getId()))
+                            .build();
+                })
+                .collect(Collectors.toList());
     }
 
     /**
@@ -434,18 +437,18 @@ public class ToCanonical {
             return null;
         }
         return artifactDefinitionMap.entrySet().stream()
-            .filter(entry -> Objects.nonNull(entry) && Objects.nonNull(entry.getValue()))
-            .map(entry -> {
-                TArtifactTemplate artifactTemplate = convert(entry.getValue(), entry.getKey());
-                this.artifactTemplates.put(artifactTemplate.getId(), artifactTemplate);
-                return new TImplementationArtifact.Builder(entry.getValue().getType())
-                    .setName(entry.getKey())
-                    .setArtifactRef(new QName(targetNamespace, artifactTemplate.getId()))
-                    .setInterfaceName(convertInterfaceName(entry.getValue()))
-                    .setOperationName(convertOperationName(entry.getValue()))
-                    .build();
-            })
-            .collect(Collectors.toList());
+                .filter(entry -> Objects.nonNull(entry) && Objects.nonNull(entry.getValue()))
+                .map(entry -> {
+                    TArtifactTemplate artifactTemplate = convert(entry.getValue(), entry.getKey());
+                    this.artifactTemplates.put(artifactTemplate.getId(), artifactTemplate);
+                    return new TImplementationArtifact.Builder(entry.getValue().getType())
+                            .setName(entry.getKey())
+                            .setArtifactRef(new QName(targetNamespace, artifactTemplate.getId()))
+                            .setInterfaceName(convertInterfaceName(entry.getValue()))
+                            .setOperationName(convertOperationName(entry.getValue()))
+                            .build();
+                })
+                .collect(Collectors.toList());
     }
 
     @Nullable
@@ -475,10 +478,10 @@ public class ToCanonical {
         }
         String typeName = fixNamespaceDuplication(id, node.getMetadata().get("targetNamespace"));
         TNodeType.Builder builder = fillEntityTypeProperties(node, new TNodeType.Builder(typeName))
-            .addRequirementDefinitions(convert(node.getRequirements()))
-            .addCapabilityDefinitions(convert(node.getCapabilities()))
-            .setInterfaceDefinitions(convert(node.getInterfaces()))
-            .addArtifacts(convert(node.getArtifacts()));
+                .addRequirementDefinitions(convert(node.getRequirements()))
+                .addCapabilityDefinitions(convert(node.getCapabilities()))
+                .setInterfaceDefinitions(convert(node.getInterfaces()))
+                .addArtifacts(convert(node.getArtifacts()));
         return builder.build();
     }
 
@@ -507,16 +510,16 @@ public class ToCanonical {
         this.currentNodeTemplate = node;
         this.currentNodeTemplateName = id;
         TNodeTemplate.Builder builder = new TNodeTemplate.Builder(id, node.getType())
-            .addDocumentation(node.getDescription())
-            .addDocumentation(node.getMetadata())
-            .setName(node.getMetadata().getOrDefault(Defaults.DISPLAY_NAME, id))
-            .setX(node.getMetadata().getOrDefault(Defaults.X_COORD, "0"))
-            .setY(node.getMetadata().getOrDefault(Defaults.Y_COORD, "0"))
-            .setProperties(convertPropertyAssignments(node.getProperties()))
-            .addRequirements(convert(node.getRequirements()))
-            .addCapabilities(convert(node.getCapabilities()))
-            // .setDeploymentArtifacts(convertDeploymentArtifacts(node.getArtifacts()));
-            .setArtifacts(convert(node.getArtifacts()));
+                .addDocumentation(node.getDescription())
+                .addDocumentation(node.getMetadata())
+                .setName(node.getMetadata().getOrDefault(Defaults.DISPLAY_NAME, id))
+                .setX(node.getMetadata().getOrDefault(Defaults.X_COORD, "0"))
+                .setY(node.getMetadata().getOrDefault(Defaults.Y_COORD, "0"))
+                .setProperties(convertPropertyAssignments(node.getProperties()))
+                .addRequirements(convert(node.getRequirements()))
+                .addCapabilities(convert(node.getCapabilities()))
+                // .setDeploymentArtifacts(convertDeploymentArtifacts(node.getArtifacts()));
+                .setArtifacts(convert(node.getArtifacts()));
         TNodeTemplate nodeTemplate = builder.build();
         this.nodeTemplateMap.put(id, nodeTemplate);
 
@@ -543,10 +546,10 @@ public class ToCanonical {
         // TOSCA YAML does not have RequirementTypes:
         // * construct TOSCA XML RequirementType from TOSCA YAML Requirement Definition	
         TRequirementDefinition.Builder builder = new TRequirementDefinition.Builder(id)
-            .setLowerBound(node.getLowerBound())
-            .setUpperBound(node.getUpperBound())
-            .setCapability(node.getCapability())
-            .setNode(node.getNode());
+                .setLowerBound(node.getLowerBound())
+                .setUpperBound(node.getUpperBound())
+                .setCapability(node.getCapability())
+                .setNode(node.getNode());
 
         if (node.getRelationship() != null) {
             builder = builder.setRelationship(node.getRelationship().getType());
@@ -657,8 +660,8 @@ public class ToCanonical {
         }
         String typeName = fixNamespaceDuplication(id, node.getMetadata().get("targetNamespace"));
         return fillEntityTypeProperties(node, new TCapabilityType.Builder(typeName))
-            .setValidSourceTypes(node.getValidSourceTypes())
-            .build();
+                .setValidSourceTypes(node.getValidSourceTypes())
+                .build();
     }
 
     /**
@@ -674,11 +677,11 @@ public class ToCanonical {
         }
 
         return new TCapabilityDefinition.Builder(id, node.getType())
-            .addDocumentation(node.getDescription())
-            .setLowerBound(node.getLowerBound())
-            .setUpperBound(node.getUpperBound())
-            .setValidSourceTypes(node.getValidSourceTypes())
-            .build();
+                .addDocumentation(node.getDescription())
+                .setLowerBound(node.getLowerBound())
+                .setUpperBound(node.getUpperBound())
+                .setValidSourceTypes(node.getValidSourceTypes())
+                .build();
     }
 
     private TInterfaceDefinition convert(YTInterfaceDefinition node, String id) {
@@ -719,6 +722,10 @@ public class ToCanonical {
         }
         if (node.getOutputs() != null) {
             builder.setOutputs(convert(node.getOutputs()));
+        }
+
+        if (node.getWorkflows() != null) {
+            builder.setWorkflows(convert(node.getWorkflows()));
         }
 
         return builder.build();
@@ -770,15 +777,15 @@ public class ToCanonical {
         String typeName = fixNamespaceDuplication(id, node.getMetadata().get("targetNamespace"));
         // convertRelationshipTypeImplementation(node.getInterfaces(), id, node.getMetadata().get("targetNamespace"));
         return fillEntityTypeProperties(node, new TRelationshipType.Builder(typeName))
-            .addInterfaces(convert(node.getInterfaces(), null))
-            .addSourceInterfaces(convert(node.getInterfaces(), "SourceInterfaces"))
-            .addTargetInterfaces(convert(node.getInterfaces(), "TargetInterfaces"))
-            .setInterfaceDefinitions(convert(node.getInterfaces()))
-            // yaml Relationship Types do not contain valid sources
-            //.setValidSource(convertValidTargetSource(node.getValidTargetTypes(), true))
-            .setValidTarget(convertValidTargetSource(node.getValidTargetTypes(), false))
-            .setValidTargetList(node.getValidTargetTypes())
-            .build();
+                .addInterfaces(convert(node.getInterfaces(), null))
+                .addSourceInterfaces(convert(node.getInterfaces(), "SourceInterfaces"))
+                .addTargetInterfaces(convert(node.getInterfaces(), "TargetInterfaces"))
+                .setInterfaceDefinitions(convert(node.getInterfaces()))
+                // yaml Relationship Types do not contain valid sources
+                //.setValidSource(convertValidTargetSource(node.getValidTargetTypes(), true))
+                .setValidTarget(convertValidTargetSource(node.getValidTargetTypes(), false))
+                .setValidTargetList(node.getValidTargetTypes())
+                .build();
     }
 
     private QName convertValidTargetSource(List<QName> targets, Boolean isSource) {
@@ -829,9 +836,9 @@ public class ToCanonical {
 
         // the topology modeler finds the source and target of relationships
         return new TRelationshipTemplate.Builder(id, node.getType(), null, null)
-            .setName(node.getType().getLocalPart())
-            .setProperties(convertPropertyAssignments(node.getProperties()))
-            .build();
+                .setName(node.getType().getLocalPart())
+                .setProperties(convertPropertyAssignments(node.getProperties()))
+                .build();
     }
 
     /**
@@ -850,19 +857,19 @@ public class ToCanonical {
         fillEntityTypeProperties(node, builder);
         builder.setAppliesTo(convertTargets(node.getTargets()));
         builder.setTriggers(
-            node.getTriggers().entrySet()
-                .stream()
-                .map(
-                    entry -> {
-                        if (entry.getValue() != null) {
-                            return convert(entry.getValue(), entry.getKey());
-                        } else {
-                            return null;
-                        }
-                    }
-                )
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList())
+                node.getTriggers().entrySet()
+                        .stream()
+                        .map(
+                                entry -> {
+                                    if (entry.getValue() != null) {
+                                        return convert(entry.getValue(), entry.getKey());
+                                    } else {
+                                        return null;
+                                    }
+                                }
+                        )
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList())
         );
 
         return builder.build();
@@ -885,10 +892,10 @@ public class ToCanonical {
         }
         if (Objects.nonNull(node.getAction())) {
             defBuilder.action(
-                node.getAction().stream()
-                    .map(this::convert)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList())
+                    node.getAction().stream()
+                            .map(this::convert)
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toList())
             );
         }
 
@@ -905,9 +912,9 @@ public class ToCanonical {
                 YTCallOperationActivityDefinition yamlDef = (YTCallOperationActivityDefinition) value;
                 TCallOperationActivityDefinition canonicalDef = new TCallOperationActivityDefinition(yamlDef.getOperation());
                 List<ParameterDefinition> inputs = yamlDef.getInputs().entrySet()
-                    .stream()
-                    .map(entry -> convert(entry.getValue(), entry.getKey()))
-                    .collect(Collectors.toList());
+                        .stream()
+                        .map(entry -> convert(entry.getValue(), entry.getKey()))
+                        .collect(Collectors.toList());
                 canonicalDef.setInputs(inputs);
 
                 return canonicalDef;
@@ -927,10 +934,10 @@ public class ToCanonical {
         }
 
         TPolicy.Builder builder = new TPolicy
-            .Builder(node.getType())
-            .setName(id)
-            .addDocumentation(node.getDescription())
-            .setTargets(node.getTargets());
+                .Builder(node.getType())
+                .setName(id)
+                .addDocumentation(node.getDescription())
+                .setTargets(node.getTargets());
 
         if (node.getProperties().entrySet().size() > 0) {
             Map<String, YTPropertyAssignment> originalProperties = node.getProperties();
@@ -991,8 +998,8 @@ public class ToCanonical {
         }
 
         TImport.Builder builder = new TImport.Builder(importType)
-            .setNamespace(node.getNamespaceUri())
-            .setLocation(node.getFile());
+                .setNamespace(node.getNamespaceUri())
+                .setLocation(node.getFile());
 
         return builder.build();
     }
@@ -1013,16 +1020,16 @@ public class ToCanonical {
         }
 
         return targetList.stream()
-            .map(TPolicyType.NodeTypeReference::new)
-            .collect(Collectors.toList());
+                .map(TPolicyType.NodeTypeReference::new)
+                .collect(Collectors.toList());
     }
 
     /**
      * Converts TOSCA YAML ArtifactDefinitions to TOSCA XML NodeTypeImplementations and ArtifactTemplates
      */
     private void convertNodeTypeImplementation(
-        Map<String, YTArtifactDefinition> implArtifacts,
-        Map<String, YTArtifactDefinition> deploymentArtifacts, String type, String targetNamespace) {
+            Map<String, YTArtifactDefinition> implArtifacts,
+            Map<String, YTArtifactDefinition> deploymentArtifacts, String type, String targetNamespace) {
         for (Map.Entry<String, YTArtifactDefinition> implArtifact : implArtifacts.entrySet()) {
             for (Map.Entry<String, YTArtifactDefinition> deploymentArtifact : deploymentArtifacts.entrySet()) {
                 if (implArtifact.getKey().equalsIgnoreCase(deploymentArtifact.getKey())) {
@@ -1031,8 +1038,8 @@ public class ToCanonical {
             }
         }
         TNodeTypeImplementation.Builder builder = (new TNodeTypeImplementation.Builder(type + "_impl", new QName(targetNamespace, type))
-            .setTargetNamespace(targetNamespace)
-            // .setDeploymentArtifacts(convertDeploymentArtifacts(deploymentArtifacts, targetNamespace))
+                .setTargetNamespace(targetNamespace)
+                // .setDeploymentArtifacts(convertDeploymentArtifacts(deploymentArtifacts, targetNamespace))
         );
         List<TImplementationArtifact> implementationArtifacts = convertImplementationArtifact(implArtifacts, targetNamespace);
         builder.setImplementationArtifacts(implementationArtifacts);
@@ -1058,9 +1065,28 @@ public class ToCanonical {
             return null;
         }
         TGroupDefinition.Builder builder = new TGroupDefinition.Builder(id, node.getType())
-            .setDescription(node.getDescription())
-            .setMembers(node.getMembers())
-            .setProperties(convertPropertyAssignments(node.getProperties()));
+                .setDescription(node.getDescription())
+                .setMembers(node.getMembers())
+                .setProperties(convertPropertyAssignments(node.getProperties()));
+        return builder.build();
+    }
+
+    private TWorkflow convert(YTWorkflow node, String id) {
+        if (Objects.isNull(node)) {
+            return null;
+        }
+
+        TWorkflow.Builder builder = new TWorkflow.Builder(id)
+                .setDescription(node.getDescription())
+                .setOutputs(convert(node.getOutputs()))
+                .setImplementation(convert(node.getImplementation()));
+
+        if (node.getInputs().entrySet().size() > 0) {
+            Map<String, YTPropertyAssignment> originalProperties = node.getInputs();
+            TEntityTemplate.Properties toscaProperties = this.convertPropertyAssignments(originalProperties);
+            builder.setInputs(toscaProperties).build();
+        }
+
         return builder.build();
     }
 
@@ -1079,22 +1105,22 @@ public class ToCanonical {
     @Deprecated
     private List<TParameter> convertParameters(Map<String, YTPropertyAssignmentOrDefinition> node) {
         return node.entrySet().stream()
-            .map(entry -> {
-                if (entry.getValue() instanceof YTPropertyDefinition) {
-                    return convertParameter((YTPropertyDefinition) entry.getValue(), entry.getKey());
-                } else {
-                    return null;
-                }
-            }).filter(Objects::nonNull)
-            .collect(Collectors.toList());
+                .map(entry -> {
+                    if (entry.getValue() instanceof YTPropertyDefinition) {
+                        return convertParameter((YTPropertyDefinition) entry.getValue(), entry.getKey());
+                    } else {
+                        return null;
+                    }
+                }).filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
     @Deprecated
     private TParameter convertParameter(YTPropertyDefinition node, String id) {
         return new TParameter.Builder(
-            id,
-            TypeConverter.INSTANCE.convert(node.getType()).getLocalPart(),
-            node.getRequired()
+                id,
+                TypeConverter.INSTANCE.convert(node.getType()).getLocalPart(),
+                node.getRequired()
         ).build();
     }
 
@@ -1112,15 +1138,15 @@ public class ToCanonical {
             return null;
         }
         TGroupType.Builder builder = fillEntityTypeProperties(node, new TGroupType.Builder(name))
-            .setMembers(node.getMembers());
+                .setMembers(node.getMembers());
         return builder.build();
     }
 
     public TDataType convert(YTDataType node, String id) {
         String name = fixNamespaceDuplication(id, node.getMetadata().get("targetNamespace"));
         TDataType.Builder builder = new TDataType.Builder(name)
-            // set specific fields 
-            .addConstraints(convertList(node.getConstraints(), this::convert));
+                // set specific fields
+                .addConstraints(convertList(node.getConstraints(), this::convert));
         fillEntityTypeProperties(node, builder);
         TDataType result = builder.build();
 
@@ -1136,10 +1162,10 @@ public class ToCanonical {
             return result;
         }
         TImport importDefinition = new TImport.Builder(Namespaces.XML_NS)
-            .setLocation(EncodingUtil.URLencode(namespace) + ".xsd")
-            // namespace must not be null
-            .setNamespace(namespace)
-            .build();
+                .setLocation(EncodingUtil.URLencode(namespace) + ".xsd")
+                // namespace must not be null
+                .setNamespace(namespace)
+                .build();
         if (!this.imports.contains(importDefinition)) {
             this.imports.add(importDefinition);
         }
@@ -1155,125 +1181,127 @@ public class ToCanonical {
     @SuppressWarnings( {"unchecked"})
     private <V, T> List<T> convert(List<? extends Map<String, V>> node) {
         return node.stream()
-            .flatMap(map -> map.entrySet().stream())
-            .map((Map.Entry<String, V> entry) -> {
-                if (entry.getValue() instanceof YTImportDefinition && "file".equals(entry.getKey())) {
-                    return (T) convert((YTImportDefinition) entry.getValue(), entry.getKey());
-                } else if (entry.getValue() instanceof YTRequirementDefinition) {
-                    return (T) convert((YTRequirementDefinition) entry.getValue(), entry.getKey());
-                } else if (entry.getValue() instanceof YTRequirementAssignment) {
-                    return (T) convert((YTRequirementAssignment) entry.getValue(), entry.getKey());
-                } else if (entry.getValue() instanceof YTPolicyDefinition) {
-                    return (T) convert((YTPolicyDefinition) entry.getValue(), entry.getKey());
-                } else {
-                    V v = entry.getValue();
-                    assert (v instanceof YTImportDefinition ||
-                        v instanceof YTRequirementDefinition ||
-                        v instanceof YTRequirementAssignment);
-                    return null;
-                }
-            })
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
+                .flatMap(map -> map.entrySet().stream())
+                .map((Map.Entry<String, V> entry) -> {
+                    if (entry.getValue() instanceof YTImportDefinition && "file".equals(entry.getKey())) {
+                        return (T) convert((YTImportDefinition) entry.getValue(), entry.getKey());
+                    } else if (entry.getValue() instanceof YTRequirementDefinition) {
+                        return (T) convert((YTRequirementDefinition) entry.getValue(), entry.getKey());
+                    } else if (entry.getValue() instanceof YTRequirementAssignment) {
+                        return (T) convert((YTRequirementAssignment) entry.getValue(), entry.getKey());
+                    } else if (entry.getValue() instanceof YTPolicyDefinition) {
+                        return (T) convert((YTPolicyDefinition) entry.getValue(), entry.getKey());
+                    } else {
+                        V v = entry.getValue();
+                        assert (v instanceof YTImportDefinition ||
+                                v instanceof YTRequirementDefinition ||
+                                v instanceof YTRequirementAssignment);
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
     @SuppressWarnings( {"unchecked"})
     private <V, T> List<T> convert(@NonNull Map<String, V> map) {
         return map.entrySet().stream()
-            .map((Map.Entry<String, V> entry) -> {
-                if (entry.getValue() == null) {
-                    return null;
-                } else if (entry.getValue() instanceof YTRelationshipType) {
-                    return convert((YTRelationshipType) entry.getValue(), entry.getKey());
-                } else if (entry.getValue() instanceof YTRelationshipTemplate) {
-                    return convert((YTRelationshipTemplate) entry.getValue(), entry.getKey());
-                } else if (entry.getValue() instanceof YTArtifactType) {
-                    return convert((YTArtifactType) entry.getValue(), entry.getKey());
-                } else if (entry.getValue() instanceof YTArtifactDefinition) {
-                    return convertToTArtifact((YTArtifactDefinition) entry.getValue(), entry.getKey());
-                } else if (entry.getValue() instanceof YTCapabilityType) {
-                    return convert((YTCapabilityType) entry.getValue(), entry.getKey());
-                } else if (entry.getValue() instanceof YTCapabilityDefinition) {
-                    return convert((YTCapabilityDefinition) entry.getValue(), entry.getKey());
-                } else if (entry.getValue() instanceof YTPolicyType) {
-                    return convert((YTPolicyType) entry.getValue(), entry.getKey());
-                } else if (entry.getValue() instanceof YTRequirementDefinition) {
-                    return convert((YTRequirementDefinition) entry.getValue(), entry.getKey());
-                } else if (entry.getValue() instanceof YTInterfaceType) {
-                    return convertToTInterfaceType((YTInterfaceType) entry.getValue(), entry.getKey());
-                } else if (entry.getValue() instanceof YTInterfaceDefinition) {
-                    return convert((YTInterfaceDefinition) entry.getValue(), entry.getKey());
-                } else if (entry.getValue() instanceof YTOperationDefinition) {
-                    return convert((YTOperationDefinition) entry.getValue(), entry.getKey());
-                } else if (entry.getValue() instanceof YTNodeTemplate) {
-                    return convert((YTNodeTemplate) entry.getValue(), entry.getKey());
-                } else if (entry.getValue() instanceof YTDataType) {
-                    return convert((YTDataType) entry.getValue(), entry.getKey());
-                } else if (entry.getValue() instanceof YTGroupType) {
-                    return convert((YTGroupType) entry.getValue(), entry.getKey());
-                } else if (entry.getValue() instanceof YTGroupDefinition) {
-                    return convert((YTGroupDefinition) entry.getValue(), entry.getKey());
-                } else if (entry.getValue() instanceof YTNodeType) {
-                    return convert((YTNodeType) entry.getValue(), entry.getKey());
-                } else if (entry.getValue() instanceof YTImportDefinition) {
-                    return convert((YTImportDefinition) entry.getValue(), entry.getKey());
-                } else if (entry.getValue() instanceof YTPolicyDefinition) {
-                    return convert((YTPolicyDefinition) entry.getValue(), entry.getKey());
-                } else if (entry.getValue() instanceof YTCapabilityAssignment) {
-                    return convert((YTCapabilityAssignment) entry.getValue(), entry.getKey());
-                } else if (entry.getValue() instanceof YTParameterDefinition) {
-                    return convert((YTParameterDefinition) entry.getValue(), entry.getKey());
-                } else if (entry.getValue() instanceof YTPropertyDefinition) {
-                    return convert((YTPropertyDefinition) entry.getValue(), entry.getKey());
-                } else if (entry.getValue() instanceof YTAttributeDefinition) {
-                    return convert((YTAttributeDefinition) entry.getValue(), entry.getKey());
-                } else {
-                    V v = entry.getValue();
-                    System.err.println(v);
-                    assert (v instanceof YTRelationshipType ||
-                        v instanceof YTRelationshipTemplate ||
-                        v instanceof YTArtifactType ||
-                        v instanceof YTArtifactDefinition ||
-                        v instanceof YTCapabilityType ||
-                        v instanceof YTCapabilityDefinition ||
-                        v instanceof YTCapabilityAssignment ||
-                        v instanceof YTPolicyType ||
-                        v instanceof YTRequirementDefinition ||
-                        //v instanceof TInterfaceType ||
-                        v instanceof YTInterfaceDefinition ||
-                        v instanceof YTOperationDefinition ||
-                        v instanceof YTNodeTemplate ||
-                        v instanceof YTGroupType ||
-                        v instanceof YTNodeType ||
-                        v instanceof YTImportDefinition ||
-                        v instanceof YTPolicyDefinition
-                    );
-                    return null;
-                }
-            })
-            .flatMap(entry -> {
-                if (entry instanceof List) {
-                    return ((List<T>) entry).stream();
-                } else {
-                    return (Stream<T>) Stream.of(entry);
-                }
-            })
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
+                .map((Map.Entry<String, V> entry) -> {
+                    if (entry.getValue() == null) {
+                        return null;
+                    } else if (entry.getValue() instanceof YTRelationshipType) {
+                        return convert((YTRelationshipType) entry.getValue(), entry.getKey());
+                    } else if (entry.getValue() instanceof YTRelationshipTemplate) {
+                        return convert((YTRelationshipTemplate) entry.getValue(), entry.getKey());
+                    } else if (entry.getValue() instanceof YTArtifactType) {
+                        return convert((YTArtifactType) entry.getValue(), entry.getKey());
+                    } else if (entry.getValue() instanceof YTArtifactDefinition) {
+                        return convertToTArtifact((YTArtifactDefinition) entry.getValue(), entry.getKey());
+                    } else if (entry.getValue() instanceof YTCapabilityType) {
+                        return convert((YTCapabilityType) entry.getValue(), entry.getKey());
+                    } else if (entry.getValue() instanceof YTCapabilityDefinition) {
+                        return convert((YTCapabilityDefinition) entry.getValue(), entry.getKey());
+                    } else if (entry.getValue() instanceof YTPolicyType) {
+                        return convert((YTPolicyType) entry.getValue(), entry.getKey());
+                    } else if (entry.getValue() instanceof YTRequirementDefinition) {
+                        return convert((YTRequirementDefinition) entry.getValue(), entry.getKey());
+                    } else if (entry.getValue() instanceof YTInterfaceType) {
+                        return convertToTInterfaceType((YTInterfaceType) entry.getValue(), entry.getKey());
+                    } else if (entry.getValue() instanceof YTInterfaceDefinition) {
+                        return convert((YTInterfaceDefinition) entry.getValue(), entry.getKey());
+                    } else if (entry.getValue() instanceof YTOperationDefinition) {
+                        return convert((YTOperationDefinition) entry.getValue(), entry.getKey());
+                    } else if (entry.getValue() instanceof YTNodeTemplate) {
+                        return convert((YTNodeTemplate) entry.getValue(), entry.getKey());
+                    } else if (entry.getValue() instanceof YTDataType) {
+                        return convert((YTDataType) entry.getValue(), entry.getKey());
+                    } else if (entry.getValue() instanceof YTGroupType) {
+                        return convert((YTGroupType) entry.getValue(), entry.getKey());
+                    } else if (entry.getValue() instanceof YTGroupDefinition) {
+                        return convert((YTGroupDefinition) entry.getValue(), entry.getKey());
+                    } else if (entry.getValue() instanceof YTNodeType) {
+                        return convert((YTNodeType) entry.getValue(), entry.getKey());
+                    } else if (entry.getValue() instanceof YTImportDefinition) {
+                        return convert((YTImportDefinition) entry.getValue(), entry.getKey());
+                    } else if (entry.getValue() instanceof YTPolicyDefinition) {
+                        return convert((YTPolicyDefinition) entry.getValue(), entry.getKey());
+                    } else if (entry.getValue() instanceof YTCapabilityAssignment) {
+                        return convert((YTCapabilityAssignment) entry.getValue(), entry.getKey());
+                    } else if (entry.getValue() instanceof YTParameterDefinition) {
+                        return convert((YTParameterDefinition) entry.getValue(), entry.getKey());
+                    } else if (entry.getValue() instanceof YTPropertyDefinition) {
+                        return convert((YTPropertyDefinition) entry.getValue(), entry.getKey());
+                    } else if (entry.getValue() instanceof YTAttributeDefinition) {
+                        return convert((YTAttributeDefinition) entry.getValue(), entry.getKey());
+                    } else if (entry.getValue() instanceof YTWorkflow) {
+                        return convert((YTWorkflow) entry.getValue(), entry.getKey());
+                    } else {
+                        V v = entry.getValue();
+                        System.err.println(v);
+                        assert (v instanceof YTRelationshipType ||
+                                v instanceof YTRelationshipTemplate ||
+                                v instanceof YTArtifactType ||
+                                v instanceof YTArtifactDefinition ||
+                                v instanceof YTCapabilityType ||
+                                v instanceof YTCapabilityDefinition ||
+                                v instanceof YTCapabilityAssignment ||
+                                v instanceof YTPolicyType ||
+                                v instanceof YTRequirementDefinition ||
+                                //v instanceof TInterfaceType ||
+                                v instanceof YTInterfaceDefinition ||
+                                v instanceof YTOperationDefinition ||
+                                v instanceof YTNodeTemplate ||
+                                v instanceof YTGroupType ||
+                                v instanceof YTNodeType ||
+                                v instanceof YTImportDefinition ||
+                                v instanceof YTPolicyDefinition
+                        );
+                        return null;
+                    }
+                })
+                .flatMap(entry -> {
+                    if (entry instanceof List) {
+                        return ((List<T>) entry).stream();
+                    } else {
+                        return (Stream<T>) Stream.of(entry);
+                    }
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
     private TEntityType.YamlPropertyDefinition convert(YTPropertyDefinition node, String name) {
         TEntityType.YamlPropertyDefinition.Builder builder = new TEntityType.YamlPropertyDefinition.Builder(name)
-            .setType(node.getType())
-            .setDescription(node.getDescription())
-            .setRequired(node.getRequired())
-            .setStatus(TEntityType.YamlPropertyDefinition.Status.getStatus(node.getStatus().toString()))
-            .setConstraints(convertList(node.getConstraints(), this::convert))
-            .setEntrySchema(convert(node.getEntrySchema()))
-            .setKeySchema(convert(node.getKeySchema()));
+                .setType(node.getType())
+                .setDescription(node.getDescription())
+                .setRequired(node.getRequired())
+                .setStatus(TEntityType.YamlPropertyDefinition.Status.getStatus(node.getStatus().toString()))
+                .setConstraints(convertList(node.getConstraints(), this::convert))
+                .setEntrySchema(convert(node.getEntrySchema()))
+                .setKeySchema(convert(node.getKeySchema()));
         // special handling to keep empty string values
         if (node.getType() != null && node.getType().toString().equals("string")
-            && node.getDefault() != null && StringUtils.isEmpty(node.getDefault().toString())) {
+                && node.getDefault() != null && StringUtils.isEmpty(node.getDefault().toString())) {
             builder.setDefaultValue("\"\"");
         } else {
             builder.setDefaultValue(ValueHelper.toString(node.getDefault()));
@@ -1288,10 +1316,10 @@ public class ToCanonical {
         }
         TSchema.Builder builder = new TSchema.Builder(node.getType());
         return builder.setConstraints(convertList(node.getConstraints(), this::convert))
-            .setDescription(node.getDescription())
-            .setEntrySchema(convert(node.getEntrySchema()))
-            .setKeySchema(convert(node.getKeySchema()))
-            .build();
+                .setDescription(node.getDescription())
+                .setEntrySchema(convert(node.getEntrySchema()))
+                .setKeySchema(convert(node.getKeySchema()))
+                .build();
     }
 
     private <R, I> List<R> convertList(@Nullable List<I> yaml, Function<I, R> convert) {
